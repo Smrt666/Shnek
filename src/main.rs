@@ -2,7 +2,6 @@ use macroquad::prelude::*;
 
 #[macroquad::main("3D")]
 async fn main() {
-
     let mut phi: f32 = 0.;
     let r = 20.;
 
@@ -26,12 +25,7 @@ async fn main() {
 
         draw_plane(vec3(-8., 0., -8.), vec2(5., 5.), None, WHITE);
 
-        draw_cube(
-            vec3(-5., 1., -2.),
-            vec3(2., 2., 2.),
-            None,
-            WHITE,
-        );
+        draw_cube(vec3(-5., 1., -2.), vec3(2., 2., 2.), None, WHITE);
         draw_cube(vec3(-5., 1., 2.), vec3(2., 2., 2.), None, WHITE);
         draw_cube(vec3(2., 0., -2.), vec3(0.4, 0.4, 0.4), None, BLACK);
 
