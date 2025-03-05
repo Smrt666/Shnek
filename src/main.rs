@@ -1,15 +1,27 @@
+use draw_utils::Drawable;
 use macroquad::prelude::*;
+
+mod draw_utils;
 
 #[macroquad::main("3D")]
 async fn main() {
     let mut phi: f32 = 0.;
     let r = 20.;
 
+    let test_cube = draw_utils::Cube {
+        position: vec3(0., 0., 0.),
+        size: vec3(10., 10., 10.),
+        color: RED,
+        repeat: 10,
+    };
+
+    let grid = draw_utils::Grid::new();
+
     loop {
-        clear_background(LIGHTGRAY);
+        clear_background(DARKGRAY);
 
         // Going 3d!
-        phi += 0.01;
+        phi += 0.001;
         set_camera(&Camera3D {
             position: vec3(r * phi.sin(), r, r * phi.cos()),
             up: vec3(0., 1., 0.),
@@ -17,19 +29,9 @@ async fn main() {
             ..Default::default()
         });
 
-        draw_grid(20, 1., BLACK, GRAY);
+        grid.draw();
 
-        draw_cube_wires(vec3(0., 1., -6.), vec3(2., 2., 2.), DARKGREEN);
-        draw_cube_wires(vec3(0., 1., 6.), vec3(2., 2., 2.), DARKBLUE);
-        draw_cube_wires(vec3(2., 1., 2.), vec3(2., 2., 2.), YELLOW);
-
-        draw_plane(vec3(-8., 0., -8.), vec2(5., 5.), None, WHITE);
-
-        draw_cube(vec3(-5., 1., -2.), vec3(2., 2., 2.), None, WHITE);
-        draw_cube(vec3(-5., 1., 2.), vec3(2., 2., 2.), None, WHITE);
-        draw_cube(vec3(2., 0., -2.), vec3(0.4, 0.4, 0.4), None, BLACK);
-
-        draw_sphere(vec3(-8., 0., 0.), 1., None, BLUE);
+        test_cube.draw();
 
         // Back to screen space, render some text
 
