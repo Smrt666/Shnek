@@ -9,3 +9,18 @@ navidezne stranice prostora do zgornje in podobno v ostale smeri. Cilj je to
 tudi videti - kača je pred sabo, za sabo, levo in desno od sebe. Če bo ostal čas
 se lahko doda tudi rezultate drugih igralcev, ali pa morda igranje z več ljudmi, 
 različne težavnosti, ali pa bo prišla kakšna druga ideja.
+
+## Delo na projektu
+Pred pushom (ali pa vsaj pred merganjem) poskrbi, da tole pravi da je ok:
+```sh
+cargo fmt
+cargo clippy
+```
+
+Preden začneš z delom naredi iz `dev` brancha svoj branch in delaj na njem.
+
+### Todos:
+- [ ] Kača
+- [ ] Hrana za kačo
+- [ ] Player input - premikanje
+- [ ] Več todojev
