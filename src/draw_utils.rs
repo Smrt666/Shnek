@@ -50,9 +50,9 @@ impl Drawable for Cube {
 
     fn draw_at(&self, position: Vec3, saturation: f32) {
         let mut color = self.color;
-        color.r = color.r as f32 * saturation;
-        color.g = color.g as f32 * saturation;
-        color.b = color.b as f32 * saturation;
+        color.r *= saturation;
+        color.g *= saturation;
+        color.b *= saturation;
 
         draw_cube(position, self.size, None, color);
     }
