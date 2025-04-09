@@ -124,6 +124,104 @@ impl Drawable for ShnekHead {
 }
 
 
+struct ShnekSegment {
+    position: ModPoint,
+    direction: Vec3,
+}
+impl ShnekSegment {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        Self {
+            position: ModPoint { x, y, z, m: SPACE_SIZE },
+            direction: vec3(0.0, 0.0, 0.0),
+        }
+    }
+
+    pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
+        self.position = ModPoint::new(x, y, z, self.position.m);
+    }
+
+    pub fn set_direction(&mut self, x: f32, y: f32, z: f32) {
+        self.direction = Vec3::new(x, y, z);
+    }
+
+    pub fn move_forward(&mut self, distance: f32) {
+        self.position = self.position + (self.direction * distance);
+    }
+
+    pub fn get_position(&self) -> Vec3 {
+        vec3(self.position.x, self.position.y, self.position.z)
+    }
+
+    pub fn get_direction(&self) -> Vec3 {
+        self.direction
+    }
+}
+impl Drawable for ShnekSegment {
+    fn get_repeat(&self) -> i32 {
+        5
+    }
+
+    fn get_position(&self) -> Vec3 {
+        vec3(self.position.x, self.position.y, self.position.z)
+    }
+
+    fn draw_at(&self, position: Vec3, saturation: f32) {
+        draw_cube(position, vec3(4.0, 4.0, 4.0), None, BLUE);
+    }
+}
+
+
+struct Shnek {
+    segments: Vec<ShnekSegment>,
+    head: ShnekHead,
+}
+
+impl Shnek {
+    pub fn new() -> Self {
+        Self {
+            segments: Vec::new(),
+            head: ShnekHead::new(0.0, 0.0, 0.0),
+        }
+    }
+
+    pub fn add_segment(&mut self) {
+        let new_segment = match self.segments.last() {
+            Some(last_segment) => {
+                let pos = last_segment.get_position() - last_segment.get_direction() * 5.0;
+                let mut segment = ShnekSegment::new(pos.x, pos.y, pos.z);
+                segment.set_direction(last_segment.get_direction().x, last_segment.get_direction().y, last_segment.get_direction().z);
+                segment
+            },
+            None => {
+                let head_pos = self.head.get_position();
+                let head_dir = self.head.get_direction();
+                let pos = head_pos - head_dir * 5.0;
+                let mut segment = ShnekSegment::new(pos.x, pos.y, pos.z);
+                segment.set_direction(head_dir.x, head_dir.y, head_dir.z);
+                segment
+            },
+        };
+        self.segments.push(new_segment);
+    }
+
+    pub fn move_forward(&mut self, distance: f32) {
+        self.head.move_forward(distance);
+        for i in (1..self.segments.len()).rev() {
+            let prev_segment = &self.segments[i - 1];
+            let mut segment = &mut self.segments[i];
+            segment.set_position(prev_segment.get_position().x, prev_segment.get_position().y, prev_segment.get_position().z);
+            segment.set_direction(prev_segment.get_direction().x, prev_segment.get_direction().y, prev_segment.get_direction().z);
+        }
+    }
+
+    pub fn set_direction(&mut self, x: f32, y: f32, z: f32) {
+        self.head.set_direction(x, y, z);
+    }
+    
+}
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
