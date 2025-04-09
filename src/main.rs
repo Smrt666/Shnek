@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 
 mod draw_utils;
 
-#[macroquad::main("3D")]
+#[macroquad::main("nisem jost")]
 async fn main() {
     let mut phi: f32 = 0.;
     let r = 20.;
