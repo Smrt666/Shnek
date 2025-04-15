@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 macroquad = "0.4.13"
+winit = "0.30.9"
