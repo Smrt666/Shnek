@@ -122,24 +122,19 @@ impl Drawable for ShnekHead {
 }
 
 struct ShnekSegment {
-    position: ModPoint,
+    position: Vec3,
     direction: Vec3,
 }
 impl ShnekSegment {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
-            position: ModPoint {
-                x,
-                y,
-                z,
-                m: SPACE_SIZE,
-            },
+            position: vec3(x, y, z),
             direction: vec3(0.0, 0.0, 0.0),
         }
     }
 
     pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
-        self.position = ModPoint::new(x, y, z, self.position.m);
+        self.position = vec3(x, y, z);
     }
 
     pub fn set_direction(&mut self, x: f32, y: f32, z: f32) {
@@ -172,7 +167,7 @@ impl Drawable for ShnekSegment {
     }
 }
 
-struct Shnek {
+pub struct Shnek {
     segments: Vec<ShnekSegment>,
     head: ShnekHead,
 }
@@ -211,11 +206,15 @@ impl Shnek {
 
     pub fn move_forward(&mut self, distance: f32) {
         self.head.move_forward(distance);
-        for i in (1..self.segments.len()).rev() {
+        if self.segments.is_empty() {
+            return;
+        }
+        self.segments[0].direction = (self.head.get_position() - self.segments[0].get_position()).normalize();
+        for i in 1..self.segments.len() {
             let (prev_segments, others) = self.segments.split_at_mut(i);
             let prev_segment = &prev_segments[prev_segments.len() - 1];
             let segment = &mut others[0];
-            segment.direction = prev_segment.get_position() - segment.get_position();
+            segment.direction = (prev_segment.get_position() - segment.get_position()).normalize();
         }
 
         for segment in &mut self.segments {
@@ -226,7 +225,30 @@ impl Shnek {
     pub fn set_direction(&mut self, x: f32, y: f32, z: f32) {
         self.head.set_direction(x, y, z);
     }
+
+    pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
+        self.head.set_position(x, y, z);
+    }
 }
+
+
+impl Drawable for Shnek {
+    fn get_repeat(&self) -> i32 {
+        5
+    }
+
+    fn get_position(&self) -> Vec3 {
+        self.head.get_position()
+    }
+
+    fn draw_at(&self, position: Vec3, saturation: f32) {
+        self.head.draw_at(position, saturation);
+        for segment in &self.segments {
+            segment.draw_at(position + segment.get_position() - self.head.get_position(), saturation);
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

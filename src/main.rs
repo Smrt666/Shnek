@@ -16,8 +16,14 @@ async fn main() {
         repeat: 10,
     };
 
-    let mut head = snake::ShnekHead::new(0., 0., 0.);
-    head.set_direction(1., 0., 0.);
+    let mut player = snake::Shnek::new();
+    player.set_position(0., 0., 0.);
+    player.set_direction(0., 0., 1.);
+    player.add_segment();
+    player.add_segment();
+    player.add_segment();
+    player.add_segment();
+    player.add_segment();
 
     let grid = draw_utils::Grid::new();
 
@@ -26,19 +32,48 @@ async fn main() {
 
         // Going 3d!
         phi += 0.001;
-        head.move_forward(0.1);
+
+        if is_key_down(KeyCode::Right) {
+            player.set_direction(1., 0., 0.);
+        }
+        if is_key_down(KeyCode::Left) {
+            player.set_direction(-1., 0., 0.);
+        }
+        if is_key_down(KeyCode::Up) {
+            player.set_direction(0., 0., -1.);
+        }
+        if is_key_down(KeyCode::Down) {
+            player.set_direction(0., 0., 1.);
+        }
+        if is_key_down(KeyCode::W) {
+            player.set_direction(0., 1., 0.);
+        }
+        if is_key_down(KeyCode::S) {
+            player.set_direction(0., -1., 0.);
+        }
+        if is_key_down(KeyCode::A) {
+            player.set_direction(-1., 0., 0.);
+        }
+        if is_key_down(KeyCode::D) {
+            player.set_direction(1., 0., 0.);
+        }
+        if is_key_down(KeyCode::Q) {
+            player.set_direction(0., 0., -1.);
+        }
+
+        player.move_forward(0.1);
         set_camera(&Camera3D {
-            position: head.get_position()
+            position: player.get_position()
                 + vec3(2.5, 6.0, 2.5)
                 + vec3(r * phi.cos(), 0.0, r * phi.sin()),
             up: vec3(0., 1., 0.),
-            target: head.get_position() + vec3(2.5, 6.0, 2.5),
+            target: player.get_position() + vec3(2.5, 6.0, 2.5),
             ..Default::default()
         });
 
         grid.draw();
 
-        head.draw();
+        player.draw();
         test_cube.draw();
 
         // Back to screen space, render some text
