@@ -1,17 +1,13 @@
-use std::ops::{Add, Sub, Mul};
+use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
-use crate::draw_utils::{
-    Drawable,
-    SPACE_SIZE,
-};
-
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ModPoint {
     x: f32,
     y: f32,
     z: f32,
-    m: f32,  // modulus
+    m: f32, // modulus
 }
 
 fn modulus(value: f32, m: f32) -> f32 {
@@ -28,9 +24,9 @@ impl ModPoint {
     }
 
     fn almost_eq(self, other: Vec3) -> bool {
-        (self.x - other.x).abs() < 1e-5 &&
-        (self.y - other.y).abs() < 1e-5 &&
-        (self.z - other.z).abs() < 1e-5
+        (self.x - other.x).abs() < 1e-5
+            && (self.y - other.y).abs() < 1e-5
+            && (self.z - other.z).abs() < 1e-5
     }
 }
 
@@ -46,7 +42,6 @@ impl Mul<f32> for ModPoint {
         }
     }
 }
-
 
 impl Add<Vec3> for ModPoint {
     type Output = Self;
@@ -74,17 +69,20 @@ impl Sub<Vec3> for ModPoint {
     }
 }
 
-
 pub struct ShnekHead {
     position: ModPoint,
     direction: Vec3,
 }
 
-
 impl ShnekHead {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
-            position: ModPoint { x, y, z, m: SPACE_SIZE },
+            position: ModPoint {
+                x,
+                y,
+                z,
+                m: SPACE_SIZE,
+            },
             direction: vec3(0.0, 0.0, 0.0),
         }
     }
@@ -123,7 +121,6 @@ impl Drawable for ShnekHead {
     }
 }
 
-
 struct ShnekSegment {
     position: ModPoint,
     direction: Vec3,
@@ -131,7 +128,12 @@ struct ShnekSegment {
 impl ShnekSegment {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
-            position: ModPoint { x, y, z, m: SPACE_SIZE },
+            position: ModPoint {
+                x,
+                y,
+                z,
+                m: SPACE_SIZE,
+            },
             direction: vec3(0.0, 0.0, 0.0),
         }
     }
@@ -170,7 +172,6 @@ impl Drawable for ShnekSegment {
     }
 }
 
-
 struct Shnek {
     segments: Vec<ShnekSegment>,
     head: ShnekHead,
@@ -189,9 +190,13 @@ impl Shnek {
             Some(last_segment) => {
                 let pos = last_segment.get_position() - last_segment.get_direction() * 5.0;
                 let mut segment = ShnekSegment::new(pos.x, pos.y, pos.z);
-                segment.set_direction(last_segment.get_direction().x, last_segment.get_direction().y, last_segment.get_direction().z);
+                segment.set_direction(
+                    last_segment.get_direction().x,
+                    last_segment.get_direction().y,
+                    last_segment.get_direction().z,
+                );
                 segment
-            },
+            }
             None => {
                 let head_pos = self.head.get_position();
                 let head_dir = self.head.get_direction();
@@ -199,7 +204,7 @@ impl Shnek {
                 let mut segment = ShnekSegment::new(pos.x, pos.y, pos.z);
                 segment.set_direction(head_dir.x, head_dir.y, head_dir.z);
                 segment
-            },
+            }
         };
         self.segments.push(new_segment);
     }
@@ -207,20 +212,21 @@ impl Shnek {
     pub fn move_forward(&mut self, distance: f32) {
         self.head.move_forward(distance);
         for i in (1..self.segments.len()).rev() {
-            let prev_segment = &self.segments[i - 1];
-            let mut segment = &mut self.segments[i];
-            segment.set_position(prev_segment.get_position().x, prev_segment.get_position().y, prev_segment.get_position().z);
-            segment.set_direction(prev_segment.get_direction().x, prev_segment.get_direction().y, prev_segment.get_direction().z);
+            let (prev_segments, others) = self.segments.split_at_mut(i);
+            let prev_segment = &prev_segments[prev_segments.len() - 1];
+            let segment = &mut others[0];
+            segment.direction = prev_segment.get_position() - segment.get_position();
+        }
+
+        for segment in &mut self.segments {
+            segment.move_forward(distance);
         }
     }
 
     pub fn set_direction(&mut self, x: f32, y: f32, z: f32) {
         self.head.set_direction(x, y, z);
     }
-    
 }
-
-
 
 #[cfg(test)]
 mod tests {

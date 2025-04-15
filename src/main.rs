@@ -28,7 +28,9 @@ async fn main() {
         phi += 0.001;
         head.move_forward(0.1);
         set_camera(&Camera3D {
-            position: head.get_position() + vec3(2.5, 6.0, 2.5) + vec3(r * phi.cos(), 0.0, r * phi.sin()),
+            position: head.get_position()
+                + vec3(2.5, 6.0, 2.5)
+                + vec3(r * phi.cos(), 0.0, r * phi.sin()),
             up: vec3(0., 1., 0.),
             target: head.get_position() + vec3(2.5, 6.0, 2.5),
             ..Default::default()
