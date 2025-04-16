@@ -7,7 +7,7 @@ pub trait Drawable {
 
     fn get_position(&self) -> Vec3;
 
-    fn draw_at(&self, position: Vec3, saturation: f32);
+    fn draw_at(&self, position: Vec3, _saturation: f32);
 
     fn draw(&self) {
         let repeat = self.get_repeat();

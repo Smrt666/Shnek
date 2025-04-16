@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, vec};
+use std::collections::VecDeque;
 
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
@@ -61,7 +61,7 @@ impl Drawable for ShnekHead {
         vec3(self.position.x, self.position.y, self.position.z)
     }
 
-    fn draw_at(&self, position: Vec3, saturation: f32) {
+    fn draw_at(&self, position: Vec3, _saturation: f32) {
         draw_cube(position, vec3(5.0, 5.0, 5.0), None, GREEN);
     }
 }
@@ -93,7 +93,7 @@ impl Drawable for ShnekSegment {
         vec3(self.position.x, self.position.y, self.position.z)
     }
 
-    fn draw_at(&self, position: Vec3, saturation: f32) {
+    fn draw_at(&self, position: Vec3, _saturation: f32) {
         draw_cube(position, vec3(4.0, 4.0, 4.0), None, BLUE);
     }
 }
@@ -132,8 +132,8 @@ impl Shnek {
                 let head_pos = self.head.get_position();
                 let head_dir = self.head.get_direction();
                 let pos = head_pos - head_dir.normalize() * Shnek::SPACING;
-                let segment = ShnekSegment::new(pos.x, pos.y, pos.z);
-                segment
+
+                ShnekSegment::new(pos.x, pos.y, pos.z)
             }
         };
         self.segments.push(new_segment);

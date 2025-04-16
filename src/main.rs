@@ -53,7 +53,7 @@ async fn main() {
         let cam_offset = up * 5.0 - dir * 5.0;
         set_camera(&Camera3D {
             position: player.get_position() + cam_offset,
-            up: up,
+            up,
             target: player.get_position() + rot_mat * vec3(1., 0., 0.) + cam_offset,
 
             ..Default::default()
