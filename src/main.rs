@@ -40,129 +40,56 @@ async fn main() {
 
     let grid = draw_utils::Grid::new();
 
-    // let mut phi: f32 = 0.;
-    // let mut psi: f32 = 0.;
-    // let mut r: f32 = 20.;
-    let px: f32 = 0.;
-    let py: f32 = 0.;
-    let pz: f32 = 10.;
 
-    let mut tx: f32 = 20.;
-    let mut ty: f32 = 0.;
-    let tz: f32 = 0.;
+    let mut px: f32 = 0.;
+    let mut py: f32 = 0.;
+    let mut pz: f32 = 10.;
 
-    let mut dir: Direction = Direction::X;
 
-    enum Direction {
-        X,
-        Y,
-        // Z,
-        MinusX,
-        MinusY,
-        // MinusZ,
-    }
+    let mut rot_mat = Mat3::IDENTITY;
+
+    let mut pos = vec3(px, py, pz);
+
+
 
     loop {
         clear_background(DARKGRAY);
+        let dir = rot_mat * vec3(1., 0., 0.);
+        let up = rot_mat * vec3(0., 0., 1.);
 
-        // if is_key_pressed(KeyCode::Left) {
-        //     psi -= 0.1;
-        // } else if is_key_pressed(KeyCode::Right) {
-        //     psi += 0.1;
-        // } else if is_key_pressed(KeyCode::Up) {
-        //     phi += 0.1;
-        // } else if is_key_pressed(KeyCode::Down) {
-        //     phi -= 0.1;
-        // }
+        pos += dir * 0.5;
 
-        // if is_key_down(KeyCode::W) {
-        //     px += 1.;
-        //     tx += 1.;
-        // } else if is_key_down(KeyCode::S) {
-        //     px -= 1.;
-        //     tx -= 1.;
-        // } else if is_key_down(KeyCode::A) {
-        //     py += 1.;
-        //     ty += 1.;
-        // } else if is_key_down(KeyCode::D) {
-        //     py -= 1.;
-        //     ty -= 1.;
-        // } else if is_key_down(KeyCode::Up) {
-        //     pz += 1.;
-        //     tz += 1.;
-        // } else if is_key_down(KeyCode::Down) {
-        //     pz -= 1.;
-        //     tz -= 1.;
-        // }
 
-        if is_key_pressed(KeyCode::Left) {
-            match dir {
-                Direction::X => {
-                    let a = tx - px;
-                    tx -= a;
-                    ty += a;
-                    dir = Direction::Y;
-                }
-                Direction::Y => {
-                    let a = ty - py;
-                    tx -= a;
-                    ty -= a;
-                    dir = Direction::MinusX;
-                }
-                // Direction::Z => {}
-                Direction::MinusX => {
-                    let a = tx - px;
-                    tx -= a;
-                    ty += a;
-                    dir = Direction::MinusY;
-                }
-                Direction::MinusY => {
-                    let a = ty - py;
-                    tx -= a;
-                    ty -= a;
-                    dir = Direction::X;
-                }
-                // Direction::MinusZ => {}
-            };
-        } else if is_key_pressed(KeyCode::Right) {
-            match dir {
-                Direction::X => {
-                    let a = tx - px;
-                    tx -= a;
-                    ty -= a;
-                    dir = Direction::MinusY;
-                }
-                Direction::Y => {
-                    let a = ty - py;
-                    tx += a;
-                    ty -= a;
-                    dir = Direction::X;
-                }
-                // Direction::Z => {}
-                Direction::MinusX => {
-                    let a = tx - px;
-                    tx -= a;
-                    ty -= a;
-                    dir = Direction::Y;
-                }
-                Direction::MinusY => {
-                    let a = ty - py;
-                    tx += a;
-                    ty -= a;
-                    dir = Direction::MinusX;
-                }
-                // Direction::MinusZ => {}
-            };
+        if is_key_down(KeyCode::E) {
+            rot_mat = Mat3::from_axis_angle(dir, 0.02) * rot_mat;
+
+        }
+        if is_key_down(KeyCode::Q) {
+            rot_mat = Mat3::from_axis_angle(dir, -0.02) * rot_mat;
+
+        }
+        if is_key_down(KeyCode::A) {
+            rot_mat = Mat3::from_axis_angle(up, 0.02) * rot_mat;
+
+        }
+        if is_key_down(KeyCode::D) {
+            rot_mat = Mat3::from_axis_angle(up, -0.02) * rot_mat;
+
+        }
+        if is_key_down(KeyCode::S) {
+            rot_mat = Mat3::from_axis_angle(up.cross(dir), 0.02) * rot_mat;
+
+        }
+        if is_key_down(KeyCode::W) {
+            rot_mat = Mat3::from_axis_angle(up.cross(dir), -0.02) * rot_mat;
+
         }
 
         set_camera(&Camera3D {
-            position: vec3(px, py, pz),
-            // up: vec3(0., 1., 0.),
-            target: vec3(tx, ty, tz),
+            position: pos,
+            up: rot_mat * vec3(0., 0., 1.),
+            target: pos + rot_mat * vec3(1., 0., 0.),
 
-            // position: vec3(r * phi.cos() * psi.cos(), r * phi.cos() * psi.sin(), r * phi.sin()),
-            // // up: vec3(0., 1., 0.),
-            // target: vec3(0., 0., 0.),
             ..Default::default()
         });
 
