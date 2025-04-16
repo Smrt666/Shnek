@@ -40,17 +40,13 @@ async fn main() {
 
     let grid = draw_utils::Grid::new();
 
-
     let mut px: f32 = 0.;
     let mut py: f32 = 0.;
     let mut pz: f32 = 10.;
 
-
     let mut rot_mat = Mat3::IDENTITY;
 
     let mut pos = vec3(px, py, pz);
-
-
 
     loop {
         clear_background(DARKGRAY);
@@ -59,30 +55,23 @@ async fn main() {
 
         pos += dir * 0.5;
 
-
         if is_key_down(KeyCode::E) {
             rot_mat = Mat3::from_axis_angle(dir, 0.02) * rot_mat;
-
         }
         if is_key_down(KeyCode::Q) {
             rot_mat = Mat3::from_axis_angle(dir, -0.02) * rot_mat;
-
         }
         if is_key_down(KeyCode::A) {
             rot_mat = Mat3::from_axis_angle(up, 0.02) * rot_mat;
-
         }
         if is_key_down(KeyCode::D) {
             rot_mat = Mat3::from_axis_angle(up, -0.02) * rot_mat;
-
         }
         if is_key_down(KeyCode::S) {
             rot_mat = Mat3::from_axis_angle(up.cross(dir), 0.02) * rot_mat;
-
         }
         if is_key_down(KeyCode::W) {
             rot_mat = Mat3::from_axis_angle(up.cross(dir), -0.02) * rot_mat;
-
         }
 
         set_camera(&Camera3D {
