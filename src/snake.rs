@@ -33,7 +33,7 @@ impl ShnekHead {
     }
 
     pub fn move_forward(&mut self, distance: f32) {
-        self.position = self.position + (self.direction * distance);
+        self.position = modulus_vec3(self.position + (self.direction * distance), SPACE_SIZE);
     }
 
     pub fn set_position(&mut self, x: f32, y: f32, z: f32) {

@@ -29,7 +29,7 @@ async fn main() {
         clear_background(DARKGRAY);
 
         // Going 3d!
-        phi += 0.001;
+        phi += 0.0;
 
         if is_key_down(KeyCode::Right) {
             player.set_direction(1., 0., 0.);
