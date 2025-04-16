@@ -19,12 +19,10 @@ async fn main() {
     let mut player = snake::Shnek::new();
     player.set_position(0., 0., 0.);
     player.set_direction(0., 0., 1.);
-    player.add_segment();
-    player.add_segment();
-    player.add_segment();
-    player.add_segment();
-    player.add_segment();
-
+    for _ in 0..15 {
+        player.add_segment();
+    }
+    
     let grid = draw_utils::Grid::new();
 
     loop {

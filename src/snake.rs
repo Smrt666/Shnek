@@ -1,14 +1,7 @@
+use std::{collections::VecDeque, vec};
+
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
-use std::ops::{Add, Mul, Sub};
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct ModPoint {
-    x: f32,
-    y: f32,
-    z: f32,
-    m: f32, // modulus
-}
 
 fn modulus(value: f32, m: f32) -> f32 {
     let mut result = value % m;
@@ -18,71 +11,19 @@ fn modulus(value: f32, m: f32) -> f32 {
     result
 }
 
-impl ModPoint {
-    fn new(x: f32, y: f32, z: f32, m: f32) -> Self {
-        Self { x, y, z, m }
-    }
-
-    fn almost_eq(self, other: Vec3) -> bool {
-        (self.x - other.x).abs() < 1e-5
-            && (self.y - other.y).abs() < 1e-5
-            && (self.z - other.z).abs() < 1e-5
-    }
-}
-
-impl Mul<f32> for ModPoint {
-    type Output = Self;
-
-    fn mul(self, scalar: f32) -> Self::Output {
-        Self {
-            x: modulus(self.x * scalar, self.m),
-            y: modulus(self.y * scalar, self.m),
-            z: modulus(self.z * scalar, self.m),
-            m: self.m,
-        }
-    }
-}
-
-impl Add<Vec3> for ModPoint {
-    type Output = Self;
-
-    fn add(self, other: Vec3) -> Self::Output {
-        Self {
-            x: modulus(self.x + other.x, self.m),
-            y: modulus(self.y + other.y, self.m),
-            z: modulus(self.z + other.z, self.m),
-            m: self.m,
-        }
-    }
-}
-
-impl Sub<Vec3> for ModPoint {
-    type Output = Self;
-
-    fn sub(self, other: Vec3) -> Self::Output {
-        Self {
-            x: modulus(self.x - other.x, self.m),
-            y: modulus(self.y - other.y, self.m),
-            z: modulus(self.z - other.z, self.m),
-            m: self.m,
-        }
-    }
+fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
+    vec3(modulus(value.x, m), modulus(value.y, m), modulus(value.z, m))
 }
 
 pub struct ShnekHead {
-    position: ModPoint,
+    position: Vec3,
     direction: Vec3,
 }
 
 impl ShnekHead {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
-            position: ModPoint {
-                x,
-                y,
-                z,
-                m: SPACE_SIZE,
-            },
+            position: vec3(x, y, z),
             direction: vec3(0.0, 0.0, 0.0),
         }
     }
@@ -92,7 +33,7 @@ impl ShnekHead {
     }
 
     pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
-        self.position = ModPoint::new(x, y, z, self.position.m);
+        self.position = vec3(x, y, z);
     }
 
     pub fn set_direction(&mut self, x: f32, y: f32, z: f32) {
@@ -123,13 +64,11 @@ impl Drawable for ShnekHead {
 
 struct ShnekSegment {
     position: Vec3,
-    direction: Vec3,
 }
 impl ShnekSegment {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
             position: vec3(x, y, z),
-            direction: vec3(0.0, 0.0, 0.0),
         }
     }
 
@@ -137,20 +76,8 @@ impl ShnekSegment {
         self.position = vec3(x, y, z);
     }
 
-    pub fn set_direction(&mut self, x: f32, y: f32, z: f32) {
-        self.direction = Vec3::new(x, y, z);
-    }
-
-    pub fn move_forward(&mut self, distance: f32) {
-        self.position = self.position + (self.direction * distance);
-    }
-
     pub fn get_position(&self) -> Vec3 {
         vec3(self.position.x, self.position.y, self.position.z)
-    }
-
-    pub fn get_direction(&self) -> Vec3 {
-        self.direction
     }
 }
 impl Drawable for ShnekSegment {
@@ -170,34 +97,37 @@ impl Drawable for ShnekSegment {
 pub struct Shnek {
     segments: Vec<ShnekSegment>,
     head: ShnekHead,
+    head_positions: VecDeque<Vec3>,
 }
 
 impl Shnek {
+    const SPACING : f32 = 5.0;
+    const FRAMES_DISTANCE : usize = 50;
+
     pub fn new() -> Self {
         Self {
             segments: Vec::new(),
             head: ShnekHead::new(0.0, 0.0, 0.0),
+            head_positions: VecDeque::new(),
         }
     }
 
     pub fn add_segment(&mut self) {
         let new_segment = match self.segments.last() {
             Some(last_segment) => {
-                let pos = last_segment.get_position() - last_segment.get_direction() * 5.0;
-                let mut segment = ShnekSegment::new(pos.x, pos.y, pos.z);
-                segment.set_direction(
-                    last_segment.get_direction().x,
-                    last_segment.get_direction().y,
-                    last_segment.get_direction().z,
-                );
-                segment
+                let before_last_pos = if self.segments.len() < 2 {
+                    self.head.get_position()
+                } else {
+                    self.segments[self.segments.len() - 2].get_position()
+                };
+                let new_pos = last_segment.get_position() + (last_segment.get_position() - before_last_pos).normalize() * Shnek::SPACING;
+                ShnekSegment::new(new_pos.x, new_pos.y, new_pos.z)
             }
             None => {
                 let head_pos = self.head.get_position();
                 let head_dir = self.head.get_direction();
-                let pos = head_pos - head_dir * 5.0;
-                let mut segment = ShnekSegment::new(pos.x, pos.y, pos.z);
-                segment.set_direction(head_dir.x, head_dir.y, head_dir.z);
+                let pos = head_pos - head_dir.normalize() * Shnek::SPACING;
+                let segment = ShnekSegment::new(pos.x, pos.y, pos.z);
                 segment
             }
         };
@@ -206,19 +136,17 @@ impl Shnek {
 
     pub fn move_forward(&mut self, distance: f32) {
         self.head.move_forward(distance);
-        if self.segments.is_empty() {
-            return;
-        }
-        self.segments[0].direction = (self.head.get_position() - self.segments[0].get_position()).normalize();
-        for i in 1..self.segments.len() {
-            let (prev_segments, others) = self.segments.split_at_mut(i);
-            let prev_segment = &prev_segments[prev_segments.len() - 1];
-            let segment = &mut others[0];
-            segment.direction = (prev_segment.get_position() - segment.get_position()).normalize();
-        }
+        self.head_positions.push_back(self.head.get_position());
 
-        for segment in &mut self.segments {
-            segment.move_forward(distance);
+        for i in 0..self.segments.len() {
+            let j = Shnek::FRAMES_DISTANCE * (i + 1);
+            if j < self.head_positions.len() {
+                let pos = self.head_positions[self.head_positions.len() - j];
+                self.segments[i].set_position(pos.x, pos.y, pos.z);
+            } else {
+                let pos = self.head_positions[0];
+                self.segments[i].set_position(pos.x, pos.y, pos.z);
+            }
         }
     }
 
@@ -238,7 +166,11 @@ impl Drawable for Shnek {
     }
 
     fn get_position(&self) -> Vec3 {
-        self.head.get_position()
+        vec3(
+            modulus(self.head.get_position().x, SPACE_SIZE),
+            modulus(self.head.get_position().y, SPACE_SIZE),
+            modulus(self.head.get_position().z, SPACE_SIZE),
+        )
     }
 
     fn draw_at(&self, position: Vec3, saturation: f32) {
@@ -254,6 +186,10 @@ impl Drawable for Shnek {
 mod tests {
     use super::*;
 
+    fn almost_eq(a: Vec3, b: Vec3) -> bool {
+        (a.x - b.x).abs() < 1e-5 && (a.y - b.y).abs() < 1e-5 && (a.z - b.z).abs() < 1e-5
+    }
+
     #[test]
     fn test_modulus() {
         assert!((modulus(5.0, 10.0) - 5.0).abs() < 1e-5);
@@ -268,26 +204,14 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        let point1 = ModPoint::new(5.0, 10.0, 15.0, 20.0);
+        let point1 = vec3(5.0, 10.0, 15.0);
         let change = vec3(10.0, 20.0, 30.0);
-        let result = point1 + change;
-        assert!(result.almost_eq(vec3(15.0, 10.0, 5.0)));
+        let result = modulus_vec3(point1 + change, 20.0);
+        assert!(almost_eq(result, vec3(15.0, 10.0, 5.0)));
 
-        let point2 = ModPoint::new(5.0, 10.0, 15.0, 20.0);
+        let point2 = vec3(5.0, 10.0, 15.0);
         let change2 = vec3(-10.0, -20.0, -30.0);
-        let result2 = point2 + change2;
-        assert!(result2.almost_eq(vec3(15.0, 10.0, 5.0)));
-    }
-
-    #[test]
-    fn test_move_head() {
-        let mut head = ShnekHead::new(5.0, 10.0, 15.0);
-        head.set_direction(1.0, 0.0, 0.0);
-        head.move_forward(5.0);
-        assert!(head.position.almost_eq(vec3(10.0, 10.0, 15.0)));
-
-        head.set_direction(0.0, 1.0, 0.0);
-        head.move_forward(150.0);
-        assert!(head.position.almost_eq(vec3(10.0, 60.0, 15.0)));
+        let result2 = modulus_vec3(point2 + change2, 20.0);
+        assert!(almost_eq(result2, vec3(15.0, 10.0, 5.0)));
     }
 }
