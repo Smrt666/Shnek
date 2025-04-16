@@ -5,7 +5,7 @@ mod draw_utils;
 mod movement;
 mod snake;
 
-#[macroquad::main("nisem jost")]
+#[macroquad::main("Shnek")]
 async fn main() {
     let test_cube = draw_utils::Cube {
         position: vec3(-10., 0., 0.),
