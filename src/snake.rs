@@ -12,7 +12,11 @@ fn modulus(value: f32, m: f32) -> f32 {
 }
 
 fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
-    vec3(modulus(value.x, m), modulus(value.y, m), modulus(value.z, m))
+    vec3(
+        modulus(value.x, m),
+        modulus(value.y, m),
+        modulus(value.z, m),
+    )
 }
 
 pub struct ShnekHead {
@@ -101,8 +105,8 @@ pub struct Shnek {
 }
 
 impl Shnek {
-    const SPACING : f32 = 5.0;
-    const FRAMES_DISTANCE : usize = 50;
+    const SPACING: f32 = 5.0;
+    const FRAMES_DISTANCE: usize = 50;
 
     pub fn new() -> Self {
         Self {
@@ -120,7 +124,8 @@ impl Shnek {
                 } else {
                     self.segments[self.segments.len() - 2].get_position()
                 };
-                let new_pos = last_segment.get_position() + (last_segment.get_position() - before_last_pos).normalize() * Shnek::SPACING;
+                let new_pos = last_segment.get_position()
+                    + (last_segment.get_position() - before_last_pos).normalize() * Shnek::SPACING;
                 ShnekSegment::new(new_pos.x, new_pos.y, new_pos.z)
             }
             None => {
@@ -159,7 +164,6 @@ impl Shnek {
     }
 }
 
-
 impl Drawable for Shnek {
     fn get_repeat(&self) -> i32 {
         5
@@ -176,11 +180,13 @@ impl Drawable for Shnek {
     fn draw_at(&self, position: Vec3, saturation: f32) {
         self.head.draw_at(position, saturation);
         for segment in &self.segments {
-            segment.draw_at(position + segment.get_position() - self.head.get_position(), saturation);
+            segment.draw_at(
+                position + segment.get_position() - self.head.get_position(),
+                saturation,
+            );
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

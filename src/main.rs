@@ -22,7 +22,7 @@ async fn main() {
     for _ in 0..15 {
         player.add_segment();
     }
-    
+
     let grid = draw_utils::Grid::new();
 
     loop {
