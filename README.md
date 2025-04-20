@@ -17,10 +17,16 @@ cargo fmt
 cargo clippy
 ```
 
+Če testiraš in je stvar laggy, lahko uporabiš optimizacije:
+```sh
+cargo run --profile=opt
+```
+
 Preden začneš z delom naredi iz `dev` brancha svoj branch in delaj na njem.
 
 ### Todos:
-- [ ] Kača
+- [x] Kača
 - [ ] Hrana za kačo
-- [ ] Player input - premikanje
-- [ ] Več todojev
+- [x] Player input - premikanje
+
+Za ostalo glej issues.
