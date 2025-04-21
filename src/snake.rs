@@ -66,7 +66,7 @@ impl Drawable for ShnekHead {
     }
 }
 
-struct ShnekSegment {
+pub struct ShnekSegment {
     position: Vec3,
 }
 impl ShnekSegment {
@@ -114,6 +114,10 @@ impl Shnek {
             head: ShnekHead::new(0.0, 0.0, 0.0),
             head_positions: VecDeque::new(),
         }
+    }
+
+    pub fn get_segments(&self) -> &Vec<ShnekSegment>{
+        &self.segments
     }
 
     pub fn add_segment(&mut self) {

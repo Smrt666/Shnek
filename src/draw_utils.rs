@@ -1,4 +1,6 @@
 use macroquad::prelude::*;
+// use macroquad::rand::*;
+
 
 pub const SPACE_SIZE: f32 = 100.0;
 
@@ -57,6 +59,35 @@ impl Drawable for Cube {
         draw_cube(position, self.size, None, color);
     }
 }
+
+pub struct Sphere {
+    pub position: Vec3,
+    pub radius: f32,
+    pub color: Color,
+    pub repeat: i32,
+}
+
+impl Drawable for Sphere {
+    fn get_repeat(&self) -> i32 {
+        self.repeat
+    }
+
+    fn get_position(&self) -> Vec3 {
+        self.position
+    }
+
+    fn draw_at(&self, position: Vec3, _saturation: f32) {
+        let color = self.color;
+        // color.r *= saturation;
+        // color.g *= saturation;
+        // color.b *= saturation;
+
+        draw_sphere(position, self.radius, None, color)
+    }
+}
+
+
+
 
 pub struct Grid {
     repeat: i32,
