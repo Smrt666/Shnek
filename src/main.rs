@@ -24,31 +24,33 @@ async fn main() {
 
     let mut rot_mat = Mat3::IDENTITY;
     loop {
+        let dt = get_frame_time();
+
         clear_background(DARKGRAY);
         let dir = rot_mat * vec3(1., 0., 0.);
         let up = rot_mat * vec3(0., 0., 1.);
 
         if is_key_down(KeyCode::E) {
-            rot_mat = Mat3::from_axis_angle(dir, 0.02) * rot_mat;
+            rot_mat = Mat3::from_axis_angle(dir, dt) * rot_mat;
         }
         if is_key_down(KeyCode::Q) {
-            rot_mat = Mat3::from_axis_angle(dir, -0.02) * rot_mat;
+            rot_mat = Mat3::from_axis_angle(dir, -dt) * rot_mat;
         }
         if is_key_down(KeyCode::A) {
-            rot_mat = Mat3::from_axis_angle(up, 0.02) * rot_mat;
+            rot_mat = Mat3::from_axis_angle(up, dt) * rot_mat;
         }
         if is_key_down(KeyCode::D) {
-            rot_mat = Mat3::from_axis_angle(up, -0.02) * rot_mat;
+            rot_mat = Mat3::from_axis_angle(up, -dt) * rot_mat;
         }
         if is_key_down(KeyCode::S) {
-            rot_mat = Mat3::from_axis_angle(up.cross(dir), 0.02) * rot_mat;
+            rot_mat = Mat3::from_axis_angle(up.cross(dir), dt) * rot_mat;
         }
         if is_key_down(KeyCode::W) {
-            rot_mat = Mat3::from_axis_angle(up.cross(dir), -0.02) * rot_mat;
+            rot_mat = Mat3::from_axis_angle(up.cross(dir), -dt) * rot_mat;
         }
 
         player.set_direction(dir);
-        player.move_forward(0.5);
+        player.move_forward(dt);
 
         let cam_offset = up * 5.0 - dir * 5.0;
         set_camera(&Camera3D {
@@ -65,8 +67,8 @@ async fn main() {
         test_cube.draw();
         // Back to screen space, render some text
 
-        // set_default_camera();
-        // draw_text("WELCOME TO 3D WORLD", 10.0, 20.0, 30.0, BLACK);
+        set_default_camera();
+        draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
 
         next_frame().await;
     }

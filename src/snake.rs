@@ -101,18 +101,19 @@ impl Drawable for ShnekSegment {
 pub struct Shnek {
     segments: Vec<ShnekSegment>,
     head: ShnekHead,
-    head_positions: VecDeque<Vec3>,
+    head_positions: VecDeque<(Vec3, f64)>,
+    speed: f32,
 }
 
 impl Shnek {
     const SPACING: f32 = 5.0;
-    const FRAMES_DISTANCE: usize = 10;
 
     pub fn new() -> Self {
         Self {
             segments: Vec::new(),
             head: ShnekHead::new(0.0, 0.0, 0.0),
             head_positions: VecDeque::new(),
+            speed: 10.0,
         }
     }
 
@@ -139,17 +140,21 @@ impl Shnek {
         self.segments.push(new_segment);
     }
 
-    pub fn move_forward(&mut self, distance: f32) {
-        self.head.move_forward(distance);
-        self.head_positions.push_back(self.head.get_position());
+    pub fn move_forward(&mut self, dt: f32) {
+        self.head.move_forward(dt * self.speed);
+        self.head_positions.push_back((self.head.get_position(), get_time()));
 
+        let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
-            let j = Shnek::FRAMES_DISTANCE * (i + 1);
-            if j < self.head_positions.len() {
-                let pos = self.head_positions[self.head_positions.len() - j];
+            let t = get_time() - i as f64 * (Shnek::SPACING / self.speed) as f64;
+            while j >= 0 && self.head_positions[j as usize].1 > t as f64 {
+                j -= 1;
+            }
+            if j >= 0 {
+                let (pos, _) = self.head_positions[j as usize];
                 self.segments[i].set_position(pos.x, pos.y, pos.z);
             } else {
-                let pos = self.head_positions[0];
+                let (pos, _) = self.head_positions[0];
                 self.segments[i].set_position(pos.x, pos.y, pos.z);
             }
         }
