@@ -1,10 +1,11 @@
 use draw_utils::Drawable;
 use macroquad::prelude::*;
-use macroquad::rand::*;
+// use macroquad::rand::*;
 
 mod draw_utils;
 // mod movement;
 mod snake;
+mod food;
 
 #[macroquad::main("Shnek")]
 async fn main() {
@@ -22,15 +23,16 @@ async fn main() {
     //     repeat: 2,
     // };
 
-    let mut japka = draw_utils::Cube {
-        position: vec3(10., 0., 0.),
+    let mut japka = food::Food {
+        position: vec3(10., 10., 10.),
         size: vec3(3., 3., 3.),
+        quality: 1,
         color: YELLOW,
-        repeat: 10,
+        repeat: 5,
     };
     
 
-    let i = 20;
+    let i = 10;
     let mut player = snake::Shnek::new();
     player.set_position(0., 0., 0.);
     player.set_direction(vec3(1., 0., 0.));
@@ -70,7 +72,7 @@ async fn main() {
         let dist = player.get_position().distance(japka.get_position());
         if dist < 3. {
             player.add_segment();
-            japka.position = random_vec3(0., 20.)
+            japka.position = food::random_vec3(0., 20.)
         }
 
         for seg in player.get_segments() {
@@ -111,13 +113,4 @@ async fn main() {
     }
 }
 
-
-
-fn random_vec3(min: f32, max: f32) -> Vec3 {
-    vec3(
-        gen_range(min, max),
-        gen_range(min, max),
-        gen_range(min, max),
-    )
-}
 

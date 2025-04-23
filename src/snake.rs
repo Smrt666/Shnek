@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
 
-fn modulus(value: f32, m: f32) -> f32 {
+pub fn modulus(value: f32, m: f32) -> f32 {
     let mut result = value % m;
     if result < 0.0 {
         result += m;
@@ -11,7 +11,7 @@ fn modulus(value: f32, m: f32) -> f32 {
     result
 }
 
-fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
+pub fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
     vec3(
         modulus(value.x, m),
         modulus(value.y, m),
