@@ -142,12 +142,13 @@ impl Shnek {
 
     pub fn move_forward(&mut self, dt: f32) {
         self.head.move_forward(dt * self.speed);
-        self.head_positions.push_back((self.head.get_position(), get_time()));
+        self.head_positions
+            .push_back((self.head.get_position(), get_time()));
 
         let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
             let t = get_time() - i as f64 * (Shnek::SPACING / self.speed) as f64;
-            while j >= 0 && self.head_positions[j as usize].1 > t as f64 {
+            while j >= 0 && self.head_positions[j as usize].1 > t {
                 j -= 1;
             }
             if j >= 0 {
