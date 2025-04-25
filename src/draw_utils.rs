@@ -6,7 +6,7 @@ pub trait Drawable {
     /// Returns the number of times to repeat the object in each direction.
     fn get_repeat(&self) -> i32;
 
-    /// Returns the position of the object. 
+    /// Returns the position of the object.
     fn get_position(&self) -> Vec3;
 
     fn draw_at(&self, position: Vec3, _saturation: f32);
@@ -70,7 +70,8 @@ impl Grid {
     }
 }
 
-impl Drawable for Grid {  // TODO: This is very unoptimized,  many lines are drawn at the same place.
+impl Drawable for Grid {
+    // TODO: This is very unoptimized,  many lines are drawn at the same place.
     fn get_repeat(&self) -> i32 {
         self.repeat
     }

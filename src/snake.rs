@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
 
-
 /// A function to calculate the modulus of a float value with a given modulus.
 /// It ensures that the result is always non-negative.
 fn modulus(value: f32, m: f32) -> f32 {
@@ -25,7 +24,6 @@ fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
 pub struct ShnekHead {
     position: Vec3,
     direction: Vec3,
-
     /*
     Position is location within [0, SPACE_SIZE]^3
     Be careful, some things get wierd when using modulus on floats.
@@ -115,7 +113,7 @@ pub struct Shnek {
 }
 
 impl Shnek {
-    const SPACING: f32 = 5.0;  // Approximate distance between segments
+    const SPACING: f32 = 5.0; // Approximate distance between segments
 
     pub fn new() -> Self {
         Self {

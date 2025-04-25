@@ -27,19 +27,18 @@ async fn main() {
         let dt = get_frame_time();
 
         view.rotate(dt);
-        
+
         player.set_direction(view.forward());
         player.move_forward(dt);
-        
+
         // Set the camera to follow the player
         view.set_camera(player.get_position());
-
 
         clear_background(DARKGRAY);
         // draw
 
         grid.draw();
-        
+
         player.draw();
         test_cube.draw();
 

@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 pub struct View {
     rot_mat: Mat3,
-    time_rotating: f32,  // How long have wasdqe been pressed
+    time_rotating: f32, // How long have wasdqe been pressed
 }
 
 impl View {
@@ -35,7 +35,7 @@ impl View {
         let right = self.right();
 
         let rot_speed = (self.time_rotating * 0.5 + 0.5) * dt;
-        let rot_speed = rot_speed.min(10.0);  // Limit the rotation speed
+        let rot_speed = rot_speed.min(10.0); // Limit the rotation speed
 
         if is_key_down(KeyCode::E) {
             self.rot_mat = Mat3::from_axis_angle(dir, rot_speed) * self.rot_mat;
@@ -72,7 +72,7 @@ impl View {
         // if is_key_down(KeyCode::Enter) {
         //     println!("{}", self.rot_mat);
         // }
-        // 
+        //
         // if is_key_down(KeyCode::Space) {
         //     println!("{}", self.rot_mat);
         //     println!("Resetting camera");
