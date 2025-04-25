@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 pub struct View {
     rot_mat: Mat3,
-    time_rotating: f32,
+    time_rotating: f32,  // How long have wasdqe been pressed
 }
 
 impl View {

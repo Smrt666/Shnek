@@ -3,6 +3,9 @@ use std::collections::VecDeque;
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
 
+
+/// A function to calculate the modulus of a float value with a given modulus.
+/// It ensures that the result is always non-negative.
 fn modulus(value: f32, m: f32) -> f32 {
     let mut result = value % m;
     if result < 0.0 {
@@ -22,6 +25,11 @@ fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
 pub struct ShnekHead {
     position: Vec3,
     direction: Vec3,
+
+    /*
+    Position is location within [0, SPACE_SIZE]^3
+    Be careful, some things get wierd when using modulus on floats.
+     */
 }
 
 impl ShnekHead {
@@ -44,9 +52,6 @@ impl ShnekHead {
         self.direction = d;
     }
 
-    pub fn get_position(&self) -> Vec3 {
-        vec3(self.position.x, self.position.y, self.position.z)
-    }
     pub fn get_direction(&self) -> Vec3 {
         self.direction
     }
@@ -58,7 +63,7 @@ impl Drawable for ShnekHead {
     }
 
     fn get_position(&self) -> Vec3 {
-        vec3(self.position.x, self.position.y, self.position.z)
+        self.position
     }
 
     fn draw_at(&self, position: Vec3, _saturation: f32) {
@@ -67,6 +72,9 @@ impl Drawable for ShnekHead {
 }
 
 struct ShnekSegment {
+    /// This is the position of the segment, position is not modulus-ed.
+    /// This struct might get deleted once the snake will be drawn as a nice
+    /// connected object.
     position: Vec3,
 }
 impl ShnekSegment {
@@ -101,12 +109,13 @@ impl Drawable for ShnekSegment {
 pub struct Shnek {
     segments: Vec<ShnekSegment>,
     head: ShnekHead,
+    // historical positions of the head, used to know where the segments should be
     head_positions: VecDeque<(Vec3, f64)>,
     speed: f32,
 }
 
 impl Shnek {
-    const SPACING: f32 = 5.0;
+    const SPACING: f32 = 5.0;  // Approximate distance between segments
 
     pub fn new() -> Self {
         Self {
@@ -141,6 +150,8 @@ impl Shnek {
     }
 
     pub fn move_forward(&mut self, dt: f32) {
+        // Segments are some time behind the head
+        // If there is no suitable position, the oldest one is used
         self.head.move_forward(dt * self.speed);
         self.head_positions
             .push_back((self.head.get_position(), get_time()));
