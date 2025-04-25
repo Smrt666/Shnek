@@ -22,51 +22,28 @@ async fn main() {
 
     let grid = draw_utils::Grid::new();
 
-    let mut rot_mat = Mat3::IDENTITY;
+    let mut view = movement::View::new();
     loop {
         let dt = get_frame_time();
 
-        clear_background(DARKGRAY);
-        let dir = rot_mat * vec3(1., 0., 0.);
-        let up = rot_mat * vec3(0., 0., 1.);
-
-        if is_key_down(KeyCode::E) {
-            rot_mat = Mat3::from_axis_angle(dir, dt) * rot_mat;
-        }
-        if is_key_down(KeyCode::Q) {
-            rot_mat = Mat3::from_axis_angle(dir, -dt) * rot_mat;
-        }
-        if is_key_down(KeyCode::A) {
-            rot_mat = Mat3::from_axis_angle(up, dt) * rot_mat;
-        }
-        if is_key_down(KeyCode::D) {
-            rot_mat = Mat3::from_axis_angle(up, -dt) * rot_mat;
-        }
-        if is_key_down(KeyCode::S) {
-            rot_mat = Mat3::from_axis_angle(up.cross(dir), dt) * rot_mat;
-        }
-        if is_key_down(KeyCode::W) {
-            rot_mat = Mat3::from_axis_angle(up.cross(dir), -dt) * rot_mat;
-        }
-
-        player.set_direction(dir);
+        view.rotate(dt);
+        
+        player.set_direction(view.forward());
         player.move_forward(dt);
+        
+        // Set the camera to follow the player
+        view.set_camera(player.get_position());
 
-        let cam_offset = up * 5.0 - dir * 5.0;
-        set_camera(&Camera3D {
-            position: player.get_position() + cam_offset,
-            up,
-            target: player.get_position() + rot_mat * vec3(1., 0., 0.) + cam_offset,
 
-            ..Default::default()
-        });
+        clear_background(DARKGRAY);
+        // draw
 
         grid.draw();
-
+        
         player.draw();
         test_cube.draw();
-        // Back to screen space, render some text
 
+        // Back to screen space, render some text
         set_default_camera();
         draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
 
