@@ -1,6 +1,8 @@
 use draw_utils::Drawable;
+use food::check_tail_collision;
 use macroquad::prelude::*;
 // use macroquad::rand::*;
+use crate::food::check_food_collision;
 
 mod draw_utils;
 // mod movement;
@@ -23,22 +25,24 @@ async fn main() {
     //     repeat: 2,
     // };
 
-    let mut japka = food::Food {
-        position: vec3(10., 10., 10.),
-        size: vec3(3., 3., 3.),
-        quality: 1,
-        color: YELLOW,
-        repeat: 5,
-    };
+    // let mut japka = food::Food {
+    //     position: vec3(10., 10., 10.),
+    //     size: vec3(3., 3., 3.),
+    //     quality: 1,
+    //     color: YELLOW,
+    //     repeat: 5,
+    // };
     
 
-    let i = 10;
+    let i = 22;
     let mut player = snake::Shnek::new();
     player.set_position(0., 0., 0.);
     player.set_direction(vec3(1., 0., 0.));
     for _ in 0..i {
         player.add_segment();
     }
+
+    let mut food_factory = food::FoodFactory::new();
 
     let grid = draw_utils::Grid::new();
 
@@ -68,20 +72,17 @@ async fn main() {
         }
 
 
+        check_food_collision(&mut player, &mut food_factory);
+        check_tail_collision(&player);
 
-        let dist = player.get_position().distance(japka.get_position());
-        if dist < 3. {
-            player.add_segment();
-            japka.position = food::random_vec3(0., 20.)
-        }
 
-        for seg in player.get_segments() {
-            if seg.get_position().distance(player.get_position()) < 1. {
-                set_default_camera();
-                draw_text("GAME OVER", 40., 40., 50.0, BLACK);
+        // for seg in player.get_segments() {
+        //     if seg.get_position().distance(player.get_position()) < 1. {
+        //         set_default_camera();
+        //         draw_text("GAME OVER", 40., 40., 50.0, BLACK);
                 
-            }
-        }
+        //     }
+        // }
 
 
         player.set_direction(dir);
@@ -101,7 +102,9 @@ async fn main() {
         player.draw();
         test_cube.draw();
 
-        japka.draw();
+        for food in food_factory.get_apples() {
+            food.draw();
+        }
 
 
 

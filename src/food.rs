@@ -1,7 +1,8 @@
 use macroquad::prelude::*;
 use macroquad::rand::*;
+use crate::draw_utils;
 use crate::draw_utils::Drawable;
-use crate::snake::{modulus, modulus_vec3};
+use crate::snake::*;
 
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
@@ -12,7 +13,7 @@ pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     )
 }
 
-
+#[derive(PartialEq, Clone, Copy)]
 pub struct Food {
     pub position: Vec3,
     pub size: Vec3,
@@ -30,13 +31,21 @@ pub struct FoodFactory {
 }
 
 impl FoodFactory {
+    pub fn new() -> Self {
+        Self { 
+            spawn_region: 50., 
+            quality_range: (1,1), 
+            all_the_apples: vec![Food::new_custom(vec3(10., 0., 0.), vec3(3., 3., 3.), 1, YELLOW)],
+        }
+    }
+
     fn get_spawn(&self) -> f32 {
         self.spawn_region
     }
 
-    // fn get_apples(&self) -> Vec<Food> {
-    //     self.all_the_apples.clone()
-    // }
+    pub fn get_apples(&self) -> Vec<Food> {
+        self.all_the_apples.clone()
+    }
 }
 
 impl Food {
@@ -86,4 +95,27 @@ impl Drawable for Food {
 }
 
 
+pub fn check_food_collision(snake: &mut Shnek, food_factory: &mut FoodFactory) {
+    for food in food_factory.all_the_apples.clone() {
+        let dist = snake.get_position().distance(food.get_position());
+        if dist < 3. {
+            for _ in 0..food.quality {
+                snake.add_segment();
+            }
+            food_factory.all_the_apples.retain(|&x| x != food);
+            food_factory.all_the_apples.push(Food::new_random(50.));
+        }
+    }
+}
+
+
+pub fn check_tail_collision(snake: &Shnek) {
+    for segment in snake.get_segments() {
+        let dist = snake.get_position().distance(segment.get_position());
+        if dist < 4. {
+            set_default_camera();
+            draw_text("collision", 40., 40., 40., BLACK);
+        }
+    }
+}
 
