@@ -4,6 +4,7 @@ use macroquad::{prelude::*, ui::root_ui};
 mod draw_utils;
 mod movement;
 mod snake;
+mod food;
 
 #[macroquad::main("Shnek")]
 async fn main() {
@@ -13,18 +14,24 @@ async fn main() {
         color: RED,
         repeat: 10,
     };
+    
+
+    let snake_start_len = 3;
     let mut player = snake::Shnek::new();
     player.set_position(0., 0., 0.);
     player.set_direction(vec3(1., 0., 0.));
-    for _ in 0..15 {
+    for _ in 0..snake_start_len {
         player.add_segment();
     }
+
+    let mut food_factory = food::FoodFactory::new();
 
     let grid = draw_utils::Grid::new();
 
     let mut view = movement::View::new();
 
     let mut paused = false;
+    let mut game_over = false;
 
     loop {
         if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
@@ -39,7 +46,15 @@ async fn main() {
 
             player.set_direction(view.forward());
             player.move_forward(dt);
+            
+            if player.check_tail_collision() {
+                paused = true;
+                game_over = true;
+            }
+
+            food_factory.check_food_collision(&mut player);
         }
+
 
         // Set the camera to follow the player
         view.set_camera(player.get_position());
@@ -48,7 +63,7 @@ async fn main() {
         // draw
 
         grid.draw();
-
+        food_factory.draw_food();
         player.draw();
         test_cube.draw();
 
@@ -56,7 +71,7 @@ async fn main() {
         set_default_camera();
         draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
         draw_text(
-            &format!("score: {}", player.get_length() - 15),
+            &format!("score: {}", player.get_length() - snake_start_len),
             10.0,
             50.0,
             30.0,
@@ -66,22 +81,24 @@ async fn main() {
         // Pause menu
         if paused {
             let screen_size = vec2(screen_width(), screen_height());
-            draw_rectangle(
+            draw_rectangle(  // draw a semi-transparent rectangle over the screen
                 0.0,
                 0.0,
                 screen_width(),
                 screen_height(),
                 color_u8!(0, 0, 0, 128),
             );
-            if root_ui().button(0.5 * screen_size, "Resume") {
+            if !game_over && root_ui().button(0.5 * screen_size, "Resume") {
                 paused = false;
             }
             if root_ui().button(0.5 * screen_size + vec2(0., 25.), "Reset") {
                 paused = false;
                 player.set_position(0., 0., 0.);
                 player.set_direction(vec3(1., 0., 0.));
-                player.clear_segments();
-                for _ in 0..15 {
+                player.reset();
+                view.reset();
+                game_over = false;
+                for _ in 0..snake_start_len {
                     player.add_segment();
                 }
             }
@@ -99,3 +116,5 @@ async fn main() {
         next_frame().await;
     }
 }
+
+

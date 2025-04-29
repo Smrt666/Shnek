@@ -5,7 +5,7 @@ use macroquad::prelude::*;
 
 /// A function to calculate the modulus of a float value with a given modulus.
 /// It ensures that the result is always non-negative.
-fn modulus(value: f32, m: f32) -> f32 {
+pub fn modulus(value: f32, m: f32) -> f32 {
     let mut result = value % m;
     if result < 0.0 {
         result += m;
@@ -13,7 +13,7 @@ fn modulus(value: f32, m: f32) -> f32 {
     result
 }
 
-fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
+pub fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
     vec3(
         modulus(value.x, m),
         modulus(value.y, m),
@@ -175,7 +175,8 @@ impl Shnek {
         }
     }
 
-    pub fn clear_segments(&mut self) {
+    pub fn reset(&mut self) {
+        self.time_moving = 0.0;
         self.segments.clear();
         self.head_positions.clear();
     }
@@ -198,6 +199,20 @@ impl Shnek {
     // pub fn set_speed(&mut self, speed: f32) {
     //     self.speed = speed;
     // }
+
+    pub fn check_tail_collision(&self) -> bool {
+        if self.time_moving < 2.0 {
+            return false;  // 2 s of spawn immunity
+        }
+        for segment in self.segments[1..].iter() {
+            let dist = self.get_position().distance(segment.get_position());
+            if dist < Shnek::SPACING * 0.8 {
+                return true;  // Collision detected
+            }
+        }
+        false  // No collision
+    }
+    
 }
 
 impl Drawable for Shnek {

@@ -89,4 +89,9 @@ impl View {
             ..Default::default()
         });
     }
+
+    pub fn reset(&mut self) {
+        self.rot_mat = Mat3::IDENTITY;
+        self.time_rotating = 0.0;
+    }
 }
