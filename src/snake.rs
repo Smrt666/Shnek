@@ -202,17 +202,16 @@ impl Shnek {
 
     pub fn check_tail_collision(&self) -> bool {
         if self.time_moving < 2.0 {
-            return false;  // 2 s of spawn immunity
+            return false; // 2 s of spawn immunity
         }
         for segment in self.segments[1..].iter() {
             let dist = self.get_position().distance(segment.get_position());
             if dist < Shnek::SPACING * 0.8 {
-                return true;  // Collision detected
+                return true; // Collision detected
             }
         }
-        false  // No collision
+        false // No collision
     }
-    
 }
 
 impl Drawable for Shnek {

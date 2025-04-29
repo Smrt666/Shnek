@@ -1,7 +1,6 @@
 use macroquad::prelude::*;
 // use macroquad::rand::*;
 
-
 pub const SPACE_SIZE: f32 = 100.0;
 
 pub trait Drawable {
@@ -87,9 +86,6 @@ impl Drawable for Sphere {
         draw_sphere(position, self.radius, None, color)
     }
 }
-
-
-
 
 pub struct Grid {
     repeat: i32,

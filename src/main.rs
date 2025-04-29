@@ -2,9 +2,9 @@ use draw_utils::Drawable;
 use macroquad::{prelude::*, ui::root_ui};
 
 mod draw_utils;
+mod food;
 mod movement;
 mod snake;
-mod food;
 
 #[macroquad::main("Shnek")]
 async fn main() {
@@ -14,7 +14,6 @@ async fn main() {
         color: RED,
         repeat: 10,
     };
-    
 
     let snake_start_len = 3;
     let mut player = snake::Shnek::new();
@@ -46,7 +45,7 @@ async fn main() {
 
             player.set_direction(view.forward());
             player.move_forward(dt);
-            
+
             if player.check_tail_collision() {
                 paused = true;
                 game_over = true;
@@ -54,7 +53,6 @@ async fn main() {
 
             food_factory.check_food_collision(&mut player);
         }
-
 
         // Set the camera to follow the player
         view.set_camera(player.get_position());
@@ -81,7 +79,8 @@ async fn main() {
         // Pause menu
         if paused {
             let screen_size = vec2(screen_width(), screen_height());
-            draw_rectangle(  // draw a semi-transparent rectangle over the screen
+            draw_rectangle(
+                // draw a semi-transparent rectangle over the screen
                 0.0,
                 0.0,
                 screen_width(),
@@ -116,5 +115,3 @@ async fn main() {
         next_frame().await;
     }
 }
-
-

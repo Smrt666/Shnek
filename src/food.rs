@@ -1,9 +1,7 @@
-use macroquad::prelude::*;
-use macroquad::rand::*;
-use crate::draw_utils;
 use crate::draw_utils::Drawable;
 use crate::snake::*;
-
+use macroquad::prelude::*;
+use macroquad::rand::*;
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
@@ -33,10 +31,15 @@ pub struct FoodFactory {
 
 impl FoodFactory {
     pub fn new() -> Self {
-        Self { 
-            spawn_region: 50., 
-            quality_range: (1,1), 
-            all_the_apples: vec![Food::new_custom(vec3(10., 0., 0.), vec3(3., 3., 3.), 1, YELLOW)],
+        Self {
+            spawn_region: 50.,
+            quality_range: (1, 1),
+            all_the_apples: vec![Food::new_custom(
+                vec3(10., 0., 0.),
+                vec3(3., 3., 3.),
+                1,
+                YELLOW,
+            )],
             max_food: 1,
         }
     }
@@ -56,15 +59,14 @@ impl FoodFactory {
                 for _ in 0..food.quality {
                     snake.add_segment();
                 }
-    
+
                 self.all_the_apples.retain(|&x| x != food);
-    
+
                 for _ in 0..gen_range(1, self.max_food) {
                     self.all_the_apples.push(Food::new_random(50., 2));
                 }
-    
+
                 // raise_max_food(food_factory);
-                
             }
         }
     }
@@ -78,20 +80,20 @@ impl FoodFactory {
 
 impl Food {
     fn new_custom(position: Vec3, size: Vec3, quality: u32, color: Color) -> Self {
-        Self{
-            position: position,
-            size: size,
-            quality: quality,
-            color: color,
+        Self {
+            position,
+            size,
+            quality,
+            color,
             repeat: 5,
         }
-    } 
+    }
 
     fn new_random(max_pos: f32, max_quality: u32) -> Self {
-        Self { 
+        Self {
             position: random_vec3(0., max_pos),
-            size: random_vec3(3., 5.), 
-            quality: gen_range(1, max_quality), 
+            size: random_vec3(3., 5.),
+            quality: gen_range(1, max_quality),
             color: YELLOW,
             repeat: 5,
         }
