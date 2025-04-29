@@ -26,7 +26,7 @@ pub struct ShnekHead {
     direction: Vec3,
     /*
     Position is location within [0, SPACE_SIZE]^3
-    Be careful, some things get wierd when using modulus on floats.
+    Be careful, some things get weird when using modulus on floats.
      */
 }
 
