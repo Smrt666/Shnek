@@ -1,13 +1,16 @@
 use macroquad::prelude::*;
+// use macroquad::rand::*;
 
 pub const SPACE_SIZE: f32 = 100.0;
 
 pub trait Drawable {
+    /// Returns the number of times to repeat the object in each direction.
     fn get_repeat(&self) -> i32;
 
+    /// Returns the position of the object.
     fn get_position(&self) -> Vec3;
 
-    fn draw_at(&self, position: Vec3, saturation: f32);
+    fn draw_at(&self, position: Vec3, _saturation: f32);
 
     fn draw(&self) {
         let repeat = self.get_repeat();
@@ -58,6 +61,32 @@ impl Drawable for Cube {
     }
 }
 
+pub struct Sphere {
+    pub position: Vec3,
+    pub radius: f32,
+    pub color: Color,
+    pub repeat: i32,
+}
+
+impl Drawable for Sphere {
+    fn get_repeat(&self) -> i32 {
+        self.repeat
+    }
+
+    fn get_position(&self) -> Vec3 {
+        self.position
+    }
+
+    fn draw_at(&self, position: Vec3, _saturation: f32) {
+        let color = self.color;
+        // color.r *= saturation;
+        // color.g *= saturation;
+        // color.b *= saturation;
+
+        draw_sphere(position, self.radius, None, color)
+    }
+}
+
 pub struct Grid {
     repeat: i32,
 }
@@ -69,6 +98,7 @@ impl Grid {
 }
 
 impl Drawable for Grid {
+    // TODO: This is very unoptimized,  many lines are drawn at the same place.
     fn get_repeat(&self) -> i32 {
         self.repeat
     }
