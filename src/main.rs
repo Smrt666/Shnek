@@ -17,24 +17,9 @@ async fn main() {
         color: RED,
         repeat: 10,
     };
-
-    // let japka = draw_utils::Sphere {
-    //     position : vec3(15., 15., 15.),
-    //     radius: 5.,
-    //     color: YELLOW,
-    //     repeat: 2,
-    // };
-
-    // let mut japka = food::Food {
-    //     position: vec3(10., 10., 10.),
-    //     size: vec3(3., 3., 3.),
-    //     quality: 1,
-    //     color: YELLOW,
-    //     repeat: 5,
-    // };
     
 
-    let i = 22;
+    let i = 3;
     let mut player = snake::Shnek::new();
     player.set_position(0., 0., 0.);
     player.set_direction(vec3(1., 0., 0.));
@@ -76,15 +61,6 @@ async fn main() {
         check_tail_collision(&player);
 
 
-        // for seg in player.get_segments() {
-        //     if seg.get_position().distance(player.get_position()) < 1. {
-        //         set_default_camera();
-        //         draw_text("GAME OVER", 40., 40., 50.0, BLACK);
-                
-        //     }
-        // }
-
-
         player.set_direction(dir);
         player.move_forward(0.5);
 
@@ -106,8 +82,9 @@ async fn main() {
             food.draw();
         }
 
-
-
+        // for food in food_factory.get_apples() {
+        //     println!("{:?}", food)
+        // }
 
         // set_default_camera();
         // draw_text("GAME OVER", 40.0, 40.0, 50.0, BLACK);
