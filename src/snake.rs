@@ -3,6 +3,8 @@ use std::collections::VecDeque;
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
 
+/// A function to calculate the modulus of a float value with a given modulus.
+/// It ensures that the result is always non-negative.
 fn modulus(value: f32, m: f32) -> f32 {
     let mut result = value % m;
     if result < 0.0 {
@@ -22,6 +24,10 @@ fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
 pub struct ShnekHead {
     position: Vec3,
     direction: Vec3,
+    /*
+    Position is location within [0, SPACE_SIZE]^3
+    Be careful, some things get wierd when using modulus on floats.
+     */
 }
 
 impl ShnekHead {
@@ -44,9 +50,6 @@ impl ShnekHead {
         self.direction = d;
     }
 
-    pub fn get_position(&self) -> Vec3 {
-        vec3(self.position.x, self.position.y, self.position.z)
-    }
     pub fn get_direction(&self) -> Vec3 {
         self.direction
     }
@@ -58,7 +61,7 @@ impl Drawable for ShnekHead {
     }
 
     fn get_position(&self) -> Vec3 {
-        vec3(self.position.x, self.position.y, self.position.z)
+        self.position
     }
 
     fn draw_at(&self, position: Vec3, _saturation: f32) {
@@ -67,6 +70,9 @@ impl Drawable for ShnekHead {
 }
 
 struct ShnekSegment {
+    /// This is the position of the segment, position is not modulus-ed.
+    /// This struct might get deleted once the snake will be drawn as a nice
+    /// connected object.
     position: Vec3,
 }
 impl ShnekSegment {
@@ -101,18 +107,22 @@ impl Drawable for ShnekSegment {
 pub struct Shnek {
     segments: Vec<ShnekSegment>,
     head: ShnekHead,
-    head_positions: VecDeque<Vec3>,
+    // historical positions of the head, used to know where the segments should be
+    head_positions: VecDeque<(Vec3, f32)>,
+    speed: f32,
+    time_moving: f32,
 }
 
 impl Shnek {
-    const SPACING: f32 = 5.0;
-    const FRAMES_DISTANCE: usize = 10;
+    const SPACING: f32 = 5.0; // Approximate distance between segments
 
     pub fn new() -> Self {
         Self {
             segments: Vec::new(),
             head: ShnekHead::new(0.0, 0.0, 0.0),
             head_positions: VecDeque::new(),
+            speed: 10.0,
+            time_moving: 0.0,
         }
     }
 
@@ -139,20 +149,35 @@ impl Shnek {
         self.segments.push(new_segment);
     }
 
-    pub fn move_forward(&mut self, distance: f32) {
-        self.head.move_forward(distance);
-        self.head_positions.push_back(self.head.get_position());
+    pub fn move_forward(&mut self, dt: f32) {
+        // Segments are some time behind the head
+        // If there is no suitable position, the oldest one is used
 
+        self.time_moving += dt;
+
+        self.head.move_forward(dt * self.speed);
+        self.head_positions
+            .push_back((self.head.get_position(), self.time_moving));
+
+        let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
-            let j = Shnek::FRAMES_DISTANCE * (i + 1);
-            if j < self.head_positions.len() {
-                let pos = self.head_positions[self.head_positions.len() - j];
+            let t = self.time_moving - i as f32 * (Shnek::SPACING / self.speed);
+            while j >= 0 && self.head_positions[j as usize].1 > t {
+                j -= 1;
+            }
+            if j >= 0 {
+                let (pos, _) = self.head_positions[j as usize];
                 self.segments[i].set_position(pos.x, pos.y, pos.z);
             } else {
-                let pos = self.head_positions[0];
+                let (pos, _) = self.head_positions[0];
                 self.segments[i].set_position(pos.x, pos.y, pos.z);
             }
         }
+    }
+
+    pub fn clear_segments(&mut self) {
+        self.segments.clear();
+        self.head_positions.clear();
     }
 
     pub fn set_direction(&mut self, d: Vec3) {
@@ -162,6 +187,17 @@ impl Shnek {
     pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
         self.head.set_position(x, y, z);
     }
+
+    pub fn get_length(&self) -> usize {
+        self.segments.len()
+    }
+
+    // pub fn get_speed(&self) -> f32 {
+    //     self.speed
+    // }
+    // pub fn set_speed(&mut self, speed: f32) {
+    //     self.speed = speed;
+    // }
 }
 
 impl Drawable for Shnek {
