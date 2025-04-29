@@ -175,6 +175,11 @@ impl Shnek {
         }
     }
 
+    pub fn clear_segments(&mut self) {
+        self.segments.clear();
+        self.head_positions.clear();
+    }
+
     pub fn set_direction(&mut self, d: Vec3) {
         self.head.set_direction(d);
     }

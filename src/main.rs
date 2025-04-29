@@ -69,6 +69,15 @@ async fn main() {
             if root_ui().button(0.5 * screen_size, "Resume") {
                 paused = false;
             }
+            if root_ui().button(0.5 * screen_size + vec2(0., 25.), "Reset") {
+                paused = false;
+                player.set_position(0., 0., 0.);
+                player.set_direction(vec3(1., 0., 0.));
+                player.clear_segments();
+                for _ in 0..15 {
+                    player.add_segment();
+                }
+            }
             if root_ui().button(0.5 * screen_size + vec2(0., 50.), "Quit") {
                 break;
             }
