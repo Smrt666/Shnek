@@ -108,8 +108,9 @@ pub struct Shnek {
     segments: Vec<ShnekSegment>,
     head: ShnekHead,
     // historical positions of the head, used to know where the segments should be
-    head_positions: VecDeque<(Vec3, f64)>,
+    head_positions: VecDeque<(Vec3, f32)>,
     speed: f32,
+    time_moving: f32,
 }
 
 impl Shnek {
@@ -121,6 +122,7 @@ impl Shnek {
             head: ShnekHead::new(0.0, 0.0, 0.0),
             head_positions: VecDeque::new(),
             speed: 10.0,
+            time_moving: 0.0,
         }
     }
 
@@ -150,13 +152,16 @@ impl Shnek {
     pub fn move_forward(&mut self, dt: f32) {
         // Segments are some time behind the head
         // If there is no suitable position, the oldest one is used
-        self.head.move_forward(dt * self.speed);
+
+        self.time_moving += dt;
+
+        self.head.move_forward(dt as f32 * self.speed);
         self.head_positions
-            .push_back((self.head.get_position(), get_time()));
+            .push_back((self.head.get_position(), self.time_moving));
 
         let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
-            let t = get_time() - i as f64 * (Shnek::SPACING / self.speed) as f64;
+            let t = self.time_moving - i as f32 * (Shnek::SPACING / self.speed);
             while j >= 0 && self.head_positions[j as usize].1 > t {
                 j -= 1;
             }
@@ -176,6 +181,13 @@ impl Shnek {
 
     pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
         self.head.set_position(x, y, z);
+    }
+
+    pub fn get_speed(&self) -> f32 {
+        self.speed
+    }
+    pub fn set_speed(&mut self, speed: f32) {
+        self.speed = speed;
     }
 }
 
