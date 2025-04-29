@@ -155,7 +155,7 @@ impl Shnek {
 
         self.time_moving += dt;
 
-        self.head.move_forward(dt as f32 * self.speed);
+        self.head.move_forward(dt * self.speed);
         self.head_positions
             .push_back((self.head.get_position(), self.time_moving));
 
@@ -183,12 +183,12 @@ impl Shnek {
         self.head.set_position(x, y, z);
     }
 
-    pub fn get_speed(&self) -> f32 {
-        self.speed
-    }
-    pub fn set_speed(&mut self, speed: f32) {
-        self.speed = speed;
-    }
+    // pub fn get_speed(&self) -> f32 {
+    //     self.speed
+    // }
+    // pub fn set_speed(&mut self, speed: f32) {
+    //     self.speed = speed;
+    // }
 }
 
 impl Drawable for Shnek {

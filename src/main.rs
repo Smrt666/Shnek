@@ -33,9 +33,10 @@ async fn main() {
 
         let dt = get_frame_time();
 
-        if !paused {  // Only update if not paused
+        if !paused {
+            // Only update if not paused
             view.rotate(dt);
-            
+
             player.set_direction(view.forward());
             player.move_forward(dt);
         }
@@ -58,7 +59,13 @@ async fn main() {
         // Pause menu
         if paused {
             let screen_size = vec2(screen_width(), screen_height());
-            draw_rectangle(0.0, 0.0, screen_width(), screen_height(), color_u8!(0, 0, 0, 128));
+            draw_rectangle(
+                0.0,
+                0.0,
+                screen_width(),
+                screen_height(),
+                color_u8!(0, 0, 0, 128),
+            );
             if root_ui().button(0.5 * screen_size, "Resume") {
                 paused = false;
             }
@@ -69,7 +76,7 @@ async fn main() {
             // root_ui().input_text(hash!(), "Set speed", &mut speed_input);
             // match speed_input.parse::<f32>() {
             //     Ok(speed) => player.set_speed(speed),
-            //     Err(_) => {}       
+            //     Err(_) => {}
             // }
         }
 
