@@ -188,6 +188,10 @@ impl Shnek {
         self.head.set_position(x, y, z);
     }
 
+    pub fn get_length(&self) -> usize {
+        self.segments.len()
+    }
+
     // pub fn get_speed(&self) -> f32 {
     //     self.speed
     // }

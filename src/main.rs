@@ -55,6 +55,13 @@ async fn main() {
         // Back to screen space, render some text
         set_default_camera();
         draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
+        draw_text(
+            &format!("score: {}", player.get_length() - 15),
+            10.0,
+            50.0,
+            30.0,
+            BLACK,
+        );
 
         // Pause menu
         if paused {
