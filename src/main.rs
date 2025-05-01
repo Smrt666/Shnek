@@ -44,7 +44,14 @@ async fn main() {
             view.rotate(dt);
 
             player.set_direction(view.forward());
-            player.move_forward(dt);
+
+            player.check_boost(dt);
+
+            if player.check_boost_time(&mut food_factory, snake_start_len) {
+                paused = true;
+                game_over = true;
+            }
+
 
             if player.check_tail_collision() {
                 paused = true;

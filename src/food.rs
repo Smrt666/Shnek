@@ -23,7 +23,7 @@ pub struct Food {
 pub struct FoodFactory {
     spawn_region: f32,
     quality_range: (u32, u32),
-    all_the_apples: Vec<Food>,
+    pub all_the_apples: Vec<Food>,
     max_food: u32,
     // size_range: Vec<u32>,
     // color_range: Vec<Color>,
@@ -54,17 +54,19 @@ impl FoodFactory {
 
     pub fn check_food_collision(&mut self, snake: &mut Shnek) {
         for &food in self.all_the_apples.clone().iter() {
-            let dist = snake.get_position().distance(food.get_position());
+            let dist = mod50_distance(snake.get_position(), food.get_position());
             if dist < 3. {
                 for _ in 0..food.quality {
                     snake.add_segment();
                 }
 
                 self.all_the_apples.retain(|&x| x != food);
-
-                for _ in 0..gen_range(1, self.max_food) {
-                    self.all_the_apples.push(Food::new_random(50., 2));
+                if food.color != BROWN {
+                    for _ in 0..gen_range(1, self.max_food) {
+                        self.all_the_apples.push(Food::new_random(50., 2));
+                    }
                 }
+                
 
                 // raise_max_food(food_factory);
             }
@@ -79,7 +81,7 @@ impl FoodFactory {
 }
 
 impl Food {
-    fn new_custom(position: Vec3, size: Vec3, quality: u32, color: Color) -> Self {
+    pub fn new_custom(position: Vec3, size: Vec3, quality: u32, color: Color) -> Self {
         Self {
             position,
             size,

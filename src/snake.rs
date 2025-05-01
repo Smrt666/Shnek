@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::draw_utils::{Drawable, SPACE_SIZE};
+use crate::{draw_utils::{Drawable, SPACE_SIZE}, food::{self, Food, FoodFactory}};
 use macroquad::prelude::*;
 
 /// A function to calculate the modulus of a float value with a given modulus.
@@ -19,6 +19,20 @@ pub fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
         modulus(value.y, m),
         modulus(value.z, m),
     )
+}
+
+
+pub fn mod50_distance(v1: Vec3, v2: Vec3) -> f32 {
+    fn mod_dist(x1: f32, x2: f32, m: f32) -> f32 {
+        let diff = (x1 - x2).abs();
+        diff.min(m - diff)
+    }
+    let m = 50.0;
+    let dx = mod_dist(v1.x, v2.x, m);
+    let dy = mod_dist(v1.y, v2.y, m);
+    let dz = mod_dist(v1.z, v2.z, m);
+
+    return (dx * dx + dy * dy + dz * dz).sqrt()
 }
 
 pub struct ShnekHead {
@@ -105,12 +119,13 @@ impl Drawable for ShnekSegment {
 }
 
 pub struct Shnek {
-    segments: Vec<ShnekSegment>,
+    pub segments: Vec<ShnekSegment>,
     head: ShnekHead,
     // historical positions of the head, used to know where the segments should be
     head_positions: VecDeque<(Vec3, f32)>,
     speed: f32,
     time_moving: f32,
+    time_boosted: f32,
 }
 
 impl Shnek {
@@ -123,6 +138,7 @@ impl Shnek {
             head_positions: VecDeque::new(),
             speed: 10.0,
             time_moving: 0.0,
+            time_boosted: 0.0,
         }
     }
 
@@ -200,12 +216,36 @@ impl Shnek {
     //     self.speed = speed;
     // }
 
+    pub fn check_boost(&mut self, dt: f32) {
+        if is_key_down(KeyCode::LeftShift) {
+            self.move_forward(dt * 2.);
+            self.time_boosted += dt;
+        } else {
+            self.move_forward(dt);
+        }
+    }
+
+    pub fn check_boost_time(&mut self, food_factory: &mut FoodFactory, start_len: usize) -> bool {
+        if self.time_boosted > 3. && self.segments.len() > start_len {
+            self.segments.pop();
+            self.time_boosted -= 3.;
+            food_factory.all_the_apples.push(
+                Food::new_custom(self.segments.last().unwrap().get_position(), vec3(3., 3., 3.), 1, BROWN)
+            ); // poops out food and shrinks
+            
+        } else if self.time_boosted > 3. {
+            return true
+        }
+        return false
+    }
+
+
     pub fn check_tail_collision(&self) -> bool {
         if self.time_moving < 2.0 {
             return false; // 2 s of spawn immunity
         }
         for segment in self.segments[1..].iter() {
-            let dist = self.get_position().distance(segment.get_position());
+            let dist = mod50_distance(self.get_position(), segment.get_position());
             if dist < Shnek::SPACING * 0.8 {
                 return true; // Collision detected
             }
