@@ -22,12 +22,12 @@ pub fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
 }
 
 
-pub fn mod50_distance(v1: Vec3, v2: Vec3) -> f32 {
+pub fn mod_distance(v1: Vec3, v2: Vec3) -> f32 {
     fn mod_dist(x1: f32, x2: f32, m: f32) -> f32 {
-        let diff = (x1 - x2).abs();
+        let diff = modulus((x1 - x2).abs(), m);
         diff.min(m - diff)
     }
-    let m = 50.0;
+    let m = SPACE_SIZE;
     let dx = mod_dist(v1.x, v2.x, m);
     let dy = mod_dist(v1.y, v2.y, m);
     let dz = mod_dist(v1.z, v2.z, m);
@@ -119,7 +119,7 @@ impl Drawable for ShnekSegment {
 }
 
 pub struct Shnek {
-    pub segments: Vec<ShnekSegment>,
+    segments: Vec<ShnekSegment>,
     head: ShnekHead,
     // historical positions of the head, used to know where the segments should be
     head_positions: VecDeque<(Vec3, f32)>,
@@ -193,6 +193,7 @@ impl Shnek {
 
     pub fn reset(&mut self) {
         self.time_moving = 0.0;
+        self.time_boosted = 0.0;
         self.segments.clear();
         self.head_positions.clear();
     }
@@ -216,7 +217,7 @@ impl Shnek {
     //     self.speed = speed;
     // }
 
-    pub fn check_boost(&mut self, dt: f32) {
+    pub fn check_boost_and_move(&mut self, dt: f32) {
         if is_key_down(KeyCode::LeftShift) {
             self.move_forward(dt * 2.);
             self.time_boosted += dt;
@@ -245,7 +246,7 @@ impl Shnek {
             return false; // 2 s of spawn immunity
         }
         for segment in self.segments[1..].iter() {
-            let dist = mod50_distance(self.get_position(), segment.get_position());
+            let dist = mod_distance(self.get_position(), segment.get_position());
             if dist < Shnek::SPACING * 0.8 {
                 return true; // Collision detected
             }
@@ -260,11 +261,7 @@ impl Drawable for Shnek {
     }
 
     fn get_position(&self) -> Vec3 {
-        vec3(
-            modulus(self.head.get_position().x, SPACE_SIZE),
-            modulus(self.head.get_position().y, SPACE_SIZE),
-            modulus(self.head.get_position().z, SPACE_SIZE),
-        )
+        modulus_vec3(self.head.get_position(), SPACE_SIZE)
     }
 
     fn draw_at(&self, position: Vec3, saturation: f32) {

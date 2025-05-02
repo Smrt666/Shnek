@@ -34,7 +34,7 @@ async fn main() {
 
     loop {
         if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
-            paused = !paused;
+            paused = !paused; //treba spremenit ker lahka tut ko je gameover klikas (včasih se ne pokaze kvadrat cez cel ekrat ko je konc)
         }
 
         let dt = get_frame_time();
@@ -45,7 +45,7 @@ async fn main() {
 
             player.set_direction(view.forward());
 
-            player.check_boost(dt);
+            player.check_boost_and_move(dt);
 
             if player.check_boost_time(&mut food_factory, snake_start_len) {
                 paused = true;
@@ -103,6 +103,7 @@ async fn main() {
                 player.set_direction(vec3(1., 0., 0.));
                 player.reset();
                 view.reset();
+                food_factory.reset();
                 game_over = false;
                 for _ in 0..snake_start_len {
                     player.add_segment();
