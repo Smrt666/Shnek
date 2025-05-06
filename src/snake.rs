@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::{draw_utils::{Drawable, SPACE_SIZE}, food::{self, Food, FoodFactory}};
+use crate::{draw_utils::{Drawable, SPACE_SIZE}, food::{Food, FoodFactory}};
 use macroquad::prelude::*;
 
 /// A function to calculate the modulus of a float value with a given modulus.
@@ -293,6 +293,16 @@ mod tests {
         assert!((modulus(10.0, 10.0) - 0.0).abs() < 1e-5);
         assert!((modulus(-10.0, 10.0) - 0.0).abs() < 1e-5);
         assert!((modulus(-156.0, 10.0) - 4.0).abs() < 1e-5);
+
+        assert_eq!(modulus(-0.0, 10.), 0.0)
+    }
+
+    #[test]
+    fn test_mod_vec3() {
+        assert!(almost_eq(modulus_vec3(vec3(101.3, 102.4, 103.6), SPACE_SIZE), vec3(1.3, 2.4, 3.6)));
+        assert!(almost_eq(modulus_vec3(vec3(300.0, 500.44, 200.55), SPACE_SIZE), vec3(0.0, 0.44, 0.55)));
+        assert!(almost_eq(modulus_vec3(vec3(-3., -0.0, -2.), SPACE_SIZE), modulus_vec3(vec3(97., 100., 98.), SPACE_SIZE)));
+        assert!(almost_eq(modulus_vec3(vec3(-13., 3., 115.), SPACE_SIZE), vec3(87., 3., 15.)));
     }
 
     #[test]
@@ -307,4 +317,15 @@ mod tests {
         let result2 = modulus_vec3(point2 + change2, 20.0);
         assert!(almost_eq(result2, vec3(15.0, 10.0, 5.0)));
     }
+
+    #[test]
+    fn test_mod_distance() {
+        assert!(mod_distance(vec3(10., 20., 30.), vec3(110., 120., 130.)) < 1e-5);
+        assert!(mod_distance(vec3(10.2, 33.22, 3.1), vec3(5.6, 20.0, 49.3)) - 48.273889 < 1e-5);
+        assert!(mod_distance(vec3(3.5, 88.6, 0.), vec3(198.3, 101.2, -130.)) - 32.951479 < 1e-5);
+        assert!(mod_distance(vec3(0.33333333, 0.44444444, 0.55555555), vec3(-0.33333333, -0.44444444, -0.55555555)) - 1.571348 < 1e-5);
+        assert!(mod_distance(vec3(100000000., 100000000., 100000000.), vec3(-200., -200., -200.)) < 1e-5);
+    }
 }
+
+

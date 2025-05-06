@@ -22,8 +22,8 @@ pub struct Food {
 }
 
 pub struct FoodFactory {
-    spawn_region: f32,
-    quality_range: (u32, u32),
+    // spawn_region: f32,
+    // quality_range: (u32, u32),
     pub all_the_apples: Vec<Food>,
     max_food: u32,
     // size_range: Vec<u32>,
@@ -33,8 +33,8 @@ pub struct FoodFactory {
 impl FoodFactory {
     pub fn new() -> Self {
         Self {
-            spawn_region: SPACE_SIZE,
-            quality_range: (1, 1),
+            // spawn_region: SPACE_SIZE,
+            // quality_range: (1, 1),
             all_the_apples: vec![Food::new_custom(
                 vec3(10., 0., 0.),
                 vec3(3., 3., 3.),
@@ -45,13 +45,13 @@ impl FoodFactory {
         }
     }
 
-    fn get_spawn(&self) -> f32 {
-        self.spawn_region
-    }
+    // fn get_spawn(&self) -> f32 {
+    //     self.spawn_region
+    // }
 
-    pub fn raise_max_food(&mut self) {
-        self.max_food += 1;
-    }
+    // pub fn raise_max_food(&mut self) {
+    //     self.max_food += 1;
+    // }
 
     pub fn check_food_collision(&mut self, snake: &mut Shnek) {
         for &food in self.all_the_apples.clone().iter() {
@@ -111,9 +111,9 @@ impl Food {
         }
     }
 
-    fn get_quality(&self) -> u32 {
-        self.quality
-    }
+    // fn get_quality(&self) -> u32 {
+    //     self.quality
+    // }
 
     fn get_position(&self) -> Vec3 {
         modulus_vec3(self.position, SPACE_SIZE)
