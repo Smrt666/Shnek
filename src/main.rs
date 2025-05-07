@@ -6,6 +6,13 @@ mod food;
 mod movement;
 mod snake;
 
+#[derive(Debug, PartialEq)]
+enum GameState {
+    Running,
+    Paused,
+    GameOver,
+}
+
 #[macroquad::main("Shnek")]
 async fn main() {
     let test_cube = draw_utils::Cube {
@@ -29,17 +36,20 @@ async fn main() {
 
     let mut view = movement::View::new();
 
-    let mut paused = false;
-    let mut game_over = false;
+    let mut game_state = GameState::Running;
 
     loop {
-        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) && !game_over {
-            paused = !paused;
+        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
+            game_state = match game_state {
+                GameState::Running => GameState::Paused,
+                GameState::Paused => GameState::Running,
+                GameState::GameOver => GameState::GameOver,
+            };
         }
 
         let dt = get_frame_time();
 
-        if !paused {
+        if game_state == GameState::Running {
             // Only update if not paused
             view.rotate(dt);
 
@@ -47,8 +57,7 @@ async fn main() {
             player.move_forward(dt);
 
             if player.check_tail_collision() {
-                paused = true;
-                game_over = true;
+                game_state = GameState::GameOver;
             }
 
             food_factory.check_food_collision(&mut player);
@@ -77,7 +86,7 @@ async fn main() {
         );
 
         // Pause menu
-        if paused {
+        if game_state == GameState::Paused || game_state == GameState::GameOver {
             let screen_size = vec2(screen_width(), screen_height());
             draw_rectangle(
                 // draw a semi-transparent rectangle over the screen
@@ -87,19 +96,18 @@ async fn main() {
                 screen_height(),
                 color_u8!(0, 0, 0, 128),
             );
-            if !game_over && root_ui().button(0.5 * screen_size, "Resume") {
-                paused = false;
+            if game_state == GameState::Paused && root_ui().button(0.5 * screen_size, "Resume") {
+                game_state = GameState::Running;
             }
             if root_ui().button(0.5 * screen_size + vec2(0., 25.), "Reset") {
-                paused = false;
                 player.set_position(0., 0., 0.);
                 player.set_direction(vec3(1., 0., 0.));
                 player.reset();
                 view.reset();
-                game_over = false;
                 for _ in 0..snake_start_len {
                     player.add_segment();
                 }
+                game_state = GameState::Running;
             }
             if root_ui().button(0.5 * screen_size + vec2(0., 50.), "Quit") {
                 break;
