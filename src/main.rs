@@ -33,7 +33,7 @@ async fn main() {
     let mut game_over = false;
 
     loop {
-        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
+        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) && !game_over {
             paused = !paused;
         }
 
