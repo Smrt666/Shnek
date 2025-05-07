@@ -82,17 +82,6 @@ impl View {
         } else {
             self.time_rotating = 0.0;
         }
-
-        // Cam rotation debug
-        // if is_key_down(KeyCode::Enter) {
-        //     println!("{}", self.rot_mat);
-        // }
-        //
-        // if is_key_down(KeyCode::Space) {
-        //     println!("{}", self.rot_mat);
-        //     println!("Resetting camera");
-        //     self.rot_mat = Mat3::IDENTITY;
-        // }
     }
 
     pub fn set_camera(&self, player_pos: Vec3) {
