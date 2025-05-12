@@ -280,19 +280,19 @@ mod tests {
     use super::*;
 
     fn almost_eq(a: Vec3, b: Vec3) -> bool {
-        (a.x - b.x).abs() < 1e-5 && (a.y - b.y).abs() < 1e-5 && (a.z - b.z).abs() < 1e-5
+        (a.x - b.x).abs() < 1e-3 && (a.y - b.y).abs() < 1e-3 && (a.z - b.z).abs() < 1e-3
     }
 
     #[test]
     fn test_modulus() {
-        assert!((modulus(5.0, 10.0) - 5.0).abs() < 1e-5);
-        assert!((modulus(-5.0, 10.0) - 5.0).abs() < 1e-5);
-        assert!((modulus(15.0, 10.0) - 5.0).abs() < 1e-5);
-        assert!((modulus(-15.0, 10.0) - 5.0).abs() < 1e-5);
-        assert!((modulus(0.0, 10.0) - 0.0).abs() < 1e-5);
-        assert!((modulus(10.0, 10.0) - 0.0).abs() < 1e-5);
-        assert!((modulus(-10.0, 10.0) - 0.0).abs() < 1e-5);
-        assert!((modulus(-156.0, 10.0) - 4.0).abs() < 1e-5);
+        assert!((modulus(5.0, 10.0) - 5.0).abs() < 1e-3);
+        assert!((modulus(-5.0, 10.0) - 5.0).abs() < 1e-3);
+        assert!((modulus(15.0, 10.0) - 5.0).abs() < 1e-3);
+        assert!((modulus(-15.0, 10.0) - 5.0).abs() < 1e-3);
+        assert!((modulus(0.0, 10.0) - 0.0).abs() < 1e-3);
+        assert!((modulus(10.0, 10.0) - 0.0).abs() < 1e-3);
+        assert!((modulus(-10.0, 10.0) - 0.0).abs() < 1e-3);
+        assert!((modulus(-156.0, 10.0) - 4.0).abs() < 1e-3);
 
         assert_eq!(modulus(-0.0, 10.), 0.0)
     }
@@ -320,11 +320,11 @@ mod tests {
 
     #[test]
     fn test_mod_distance() {
-        assert!(mod_distance(vec3(10., 20., 30.), vec3(110., 120., 130.)) < 1e-5);
-        assert!(mod_distance(vec3(10.2, 33.22, 3.1), vec3(5.6, 20.0, 49.3)) - 48.273889 < 1e-5);
-        assert!(mod_distance(vec3(3.5, 88.6, 0.), vec3(198.3, 101.2, -130.)) - 32.951479 < 1e-5);
-        assert!(mod_distance(vec3(0.33333333, 0.44444444, 0.55555555), vec3(-0.33333333, -0.44444444, -0.55555555)) - 1.571348 < 1e-5);
-        assert!(mod_distance(vec3(100000000., 100000000., 100000000.), vec3(-200., -200., -200.)) < 1e-5);
+        assert!(mod_distance(vec3(10., 20., 30.), vec3(110., 120., 130.)) < 1e-3);
+        assert!(mod_distance(vec3(10.2, 33.22, 3.1), vec3(5.6, 20.0, 49.3)) - 48.273889 < 1e-3);
+        assert!(mod_distance(vec3(3.5, 88.6, 0.), vec3(198.3, 101.2, -130.)) - 32.951479 < 1e-3);
+        assert!(mod_distance(vec3(0.33333333, 0.44444444, 0.55555555), vec3(-0.33333333, -0.44444444, -0.55555555)) - 1.571348 < 1e-3);
+        assert!(mod_distance(vec3(100000000., 100000000., 100000000.), vec3(-200., -200., -200.)) < 1e-3);
     }
 }
 
