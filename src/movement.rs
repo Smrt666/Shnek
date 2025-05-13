@@ -14,19 +14,31 @@ impl View {
     }
 
     pub fn up(&self) -> Vec3 {
-        self.rot_mat * vec3(0., 1., 0.)
+        (self.rot_mat * vec3(0., 1., 0.)).normalize()
     }
 
     pub fn forward(&self) -> Vec3 {
-        self.rot_mat * vec3(1., 0., 0.)
+        (self.rot_mat * vec3(1., 0., 0.)).normalize()
     }
 
     pub fn right(&self) -> Vec3 {
-        self.rot_mat * vec3(0., 0., 1.)
+        (self.rot_mat * vec3(0., 0., 1.)).normalize()
     }
 
     pub fn cam_offset(&self) -> Vec3 {
         self.up() * 5.0 - self.forward() * 5.0
+    }
+
+    pub fn correct(&mut self) {
+        // Correct the rotation matrix to be orthogonal
+        let forward = self.forward();
+        let up = self.up();
+
+        // Recalculate the right vector
+        let new_right = forward.cross(up).normalize();
+        let new_up = new_right.cross(forward).normalize();
+
+        self.rot_mat = Mat3::from_cols(forward, new_up, new_right);
     }
 
     pub fn rotate(&mut self, dt: f32) {
@@ -56,6 +68,9 @@ impl View {
             self.rot_mat = Mat3::from_axis_angle(right, rot_speed) * self.rot_mat;
         }
 
+        // Correct the rotation matrix to be orthogonal
+        self.correct();
+
         if is_key_down(KeyCode::E)
             || is_key_down(KeyCode::Q)
             || is_key_down(KeyCode::A)
@@ -67,17 +82,6 @@ impl View {
         } else {
             self.time_rotating = 0.0;
         }
-
-        // Cam rotation debug
-        // if is_key_down(KeyCode::Enter) {
-        //     println!("{}", self.rot_mat);
-        // }
-        //
-        // if is_key_down(KeyCode::Space) {
-        //     println!("{}", self.rot_mat);
-        //     println!("Resetting camera");
-        //     self.rot_mat = Mat3::IDENTITY;
-        // }
     }
 
     pub fn set_camera(&self, player_pos: Vec3) {
