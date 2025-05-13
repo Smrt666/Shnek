@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use macroquad::prelude::*;
+use tobj::OFFLINE_RENDERING_LOAD_OPTIONS;
 // use macroquad::rand::*;
 
 pub const SPACE_SIZE: f32 = 100.0;
@@ -10,9 +13,9 @@ pub trait Drawable {
     /// Returns the position of the object.
     fn get_position(&self) -> Vec3;
 
-    fn draw_at(&self, position: Vec3, _saturation: f32);
+    fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<tobj::Model>>, materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>);
 
-    fn draw(&self) {
+    fn draw(&self, models: Option<&Vec<tobj::Model>>, materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>) {
         let repeat = self.get_repeat();
         let origin = self.get_position();
         for i in -repeat..=repeat {
@@ -28,7 +31,7 @@ pub trait Drawable {
                         1.0 - (i * i + j * j + k * k) as f32 / (repeat * repeat * 3) as f32;
                     let saturation = saturation.max(0.0);
 
-                    self.draw_at(position, saturation);
+                    self.draw_at(position, saturation, models, materials, textures);
                 }
             }
         }
@@ -51,7 +54,7 @@ impl Drawable for Cube {
         self.position
     }
 
-    fn draw_at(&self, position: Vec3, saturation: f32) {
+    fn draw_at(&self, position: Vec3, saturation: f32, _models: Option<&Vec<tobj::Model>>, _materials: Option<&Vec<tobj::Material>>, _textures: Option<&HashMap<String, Texture2D>>) {
         let mut color = self.color;
         color.r *= saturation;
         color.g *= saturation;
@@ -77,52 +80,12 @@ impl Drawable for Sphere {
         self.position
     }
 
-    fn draw_at(&self, position: Vec3, _saturation: f32) {
+    fn draw_at(&self, position: Vec3, _saturation: f32, _models: Option<&Vec<tobj::Model>>, _materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>) {
         let color = self.color;
         // color.r *= saturation;
         // color.g *= saturation;
         // color.b *= saturation;
 
         draw_sphere(position, self.radius, None, color)
-    }
-}
-
-pub struct Grid {
-    repeat: i32,
-}
-
-impl Grid {
-    pub fn new() -> Self {
-        Self { repeat: 3 }
-    }
-}
-
-impl Drawable for Grid {
-    // TODO: This is very unoptimized,  many lines are drawn at the same place.
-    fn get_repeat(&self) -> i32 {
-        self.repeat
-    }
-
-    fn get_position(&self) -> Vec3 {
-        vec3(0., 0., 0.)
-    }
-
-    fn draw_at(&self, position: Vec3, _: f32) {
-        let color = Color::from_rgba(0, 0, 0, 10);
-        draw_line_3d(
-            position + vec3(-SPACE_SIZE * self.repeat as f32, 0., 0.),
-            position + vec3(SPACE_SIZE * self.repeat as f32, 0., 0.),
-            color,
-        );
-        draw_line_3d(
-            position + vec3(0., -SPACE_SIZE * self.repeat as f32, 0.),
-            position + vec3(0., SPACE_SIZE * self.repeat as f32, 0.),
-            color,
-        );
-        draw_line_3d(
-            position + vec3(0., 0., -SPACE_SIZE * self.repeat as f32),
-            position + vec3(0., 0., SPACE_SIZE * self.repeat as f32),
-            color,
-        );
     }
 }

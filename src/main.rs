@@ -1,5 +1,8 @@
+use std::{fs, env};
+
 use draw_utils::Drawable;
 use macroquad::{prelude::*, ui::root_ui};
+use tobj::load_obj;
 
 mod draw_utils;
 mod food;
@@ -15,13 +18,12 @@ enum GameState {
 
 #[macroquad::main("Shnek")]
 async fn main() {
-    let test_cube = draw_utils::Cube {
-        position: vec3(-10., 0., 0.),
-        size: vec3(5., 5., 5.),
-        color: RED,
-        repeat: 10,
-    };
-
+    let (models, materials) = load_obj(
+        "assets/test_obj/eyeball.obj",
+        &tobj::GPU_LOAD_OPTIONS,
+    )
+    .expect("Failed to load OBJ file");
+    
     let snake_start_len = 3;
     let mut player = snake::Shnek::new();
     player.set_position(0., 0., 0.);
@@ -72,7 +74,6 @@ async fn main() {
         grid.draw();
         food_factory.draw_food();
         player.draw();
-        test_cube.draw();
 
         // Back to screen space, render some text
         set_default_camera();

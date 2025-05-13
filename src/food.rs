@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+
 use crate::draw_utils::Drawable;
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
+use macroquad::text;
+use tobj::{Model, Material};
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
@@ -27,6 +31,9 @@ pub struct FoodFactory {
     max_food: u32,
     // size_range: Vec<u32>,
     // color_range: Vec<Color>,
+    models: Vec<Model>,
+    materials: Vec<Material>,
+    textures: HashMap<String, Texture2D>,
 }
 
 impl FoodFactory {
@@ -41,7 +48,18 @@ impl FoodFactory {
                 YELLOW,
             )],
             max_food: 1,
+            models: vec![],
+            materials: vec![],
+            textures: HashMap::new(),
         }
+    }
+
+    fn add_modelerial(&mut self, model: Model, material: Material) {
+        self.models.push(model);
+        self.materials.push(material);
+        self.textures.insert(
+            material.normal_texture  // TODO: load texture from file
+        );
     }
 
     fn get_spawn(&self) -> f32 {
@@ -73,7 +91,7 @@ impl FoodFactory {
 
     pub fn draw_food(&self) {
         for food in self.all_the_apples.iter() {
-            food.draw();
+            food.draw(Some(&self.models), Some(&self.materials), Some(&self.textures));
         }
     }
 }
@@ -108,6 +126,47 @@ impl Food {
     }
 }
 
+fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<String, Texture2D>) -> Mesh {
+    let mut vertices: Vec<Vertex> = Vec::new();
+    let mut indices: Vec<u16> = Vec::new();
+    for i in model.mesh.indices.iter() {
+        let i = *i as usize;
+        let x = model.mesh.positions[i * 3];
+        let y = model.mesh.positions[i * 3 + 1];
+        let z = model.mesh.positions[i * 3 + 2];
+
+        // Could not exist
+        let u = model.mesh.texcoords.get(i * 2);
+        let v = model.mesh.texcoords.get(i * 2 + 1);
+        let uv = match (u, v) {
+            (Some(u), Some(v)) => vec2(*u, *v),
+            _ => vec2(0.0, 0.0),
+        };
+
+        // Could not exist (normals are not used by default macroquad)
+        let nx = model.mesh.normals.get(i * 3);
+        let ny = model.mesh.normals.get(i * 3 + 1);
+        let nz = model.mesh.normals.get(i * 3 + 2);
+        let normal = match (nx, ny, nz) {
+            (Some(nx), Some(ny), Some(nz)) => vec4(*nx, *ny, *nz, 1.0),
+            _ => vec4(0.0, 0.0, 0.0, 1.0),
+        };
+
+        vertices.push(Vertex {
+            position: vec3(x, y, z),
+            uv: uv,
+            color: [0, 0, 0, 0],
+            normal: normal,
+        });
+        indices.push(i as u16);
+    }
+    let texture = match &material.normal_texture {
+        Some(texture_file_name) => textures.get(texture_file_name),
+        None => None,
+    };
+    Mesh { vertices, indices: indices, texture: texture.cloned()}
+}
+
 impl Drawable for Food {
     fn get_repeat(&self) -> i32 {
         self.repeat
@@ -117,7 +176,19 @@ impl Drawable for Food {
         self.position
     }
 
-    fn draw_at(&self, position: Vec3, _saturation: f32) {
-        draw_cube(position, self.size, None, self.color);
+    fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<Model>>, materials: Option<&Vec<Material>>, textures: Option<&HashMap<String, Texture2D>>) {
+        match (models, materials, textures) {
+            (Some(models), Some(materials), Some(textures)) => {
+                for model in models.iter() {
+                    let mat_id = model.mesh.material_id.unwrap_or(0);
+                    let material = &materials[mat_id];
+                    let mesh = tobj_model_to_mesh(model, material, textures);
+                    draw_mesh(&mesh);
+                }
+            }
+            _ => {
+                draw_cube(position, self.size, None, self.color);
+            }
+        }
     }
 }
