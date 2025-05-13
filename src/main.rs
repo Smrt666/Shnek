@@ -61,7 +61,6 @@ async fn main() {
                 game_state = GameState::GameOver;
             }
 
-
             if player.check_tail_collision() {
                 game_state = GameState::GameOver;
             }

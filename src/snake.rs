@@ -1,6 +1,9 @@
 use std::collections::VecDeque;
 
-use crate::{draw_utils::{Drawable, SPACE_SIZE}, food::{Food, FoodFactory}};
+use crate::{
+    draw_utils::{Drawable, SPACE_SIZE},
+    food::{Food, FoodFactory},
+};
 use macroquad::prelude::*;
 
 /// A function to calculate the modulus of a float value with a given modulus.
@@ -21,7 +24,6 @@ pub fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
     )
 }
 
-
 pub fn mod_distance(v1: Vec3, v2: Vec3) -> f32 {
     fn mod_dist(x1: f32, x2: f32, m: f32) -> f32 {
         let diff = modulus((x1 - x2).abs(), m);
@@ -32,7 +34,7 @@ pub fn mod_distance(v1: Vec3, v2: Vec3) -> f32 {
     let dy = mod_dist(v1.y, v2.y, m);
     let dz = mod_dist(v1.z, v2.z, m);
 
-    return (dx * dx + dy * dy + dz * dz).sqrt()
+    (dx * dx + dy * dy + dz * dz).sqrt()
 }
 
 pub struct ShnekHead {
@@ -230,16 +232,17 @@ impl Shnek {
         if self.time_boosted > 3. && self.segments.len() > start_len {
             self.segments.pop();
             self.time_boosted -= 3.;
-            food_factory.all_the_apples.push(
-                Food::new_custom(self.segments.last().unwrap().get_position(), vec3(3., 3., 3.), 1, BROWN)
-            ); // poops out food and shrinks
-            
+            food_factory.all_the_apples.push(Food::new_custom(
+                self.segments.last().unwrap().get_position(),
+                vec3(3., 3., 3.),
+                1,
+                BROWN,
+            )); // poops out food and shrinks
         } else if self.time_boosted > 3. {
-            return true
+            return true;
         }
-        return false
+        false
     }
-
 
     pub fn check_tail_collision(&self) -> bool {
         if self.time_moving < 2.0 {
@@ -299,10 +302,22 @@ mod tests {
 
     #[test]
     fn test_mod_vec3() {
-        assert!(almost_eq(modulus_vec3(vec3(101.3, 102.4, 103.6), SPACE_SIZE), vec3(1.3, 2.4, 3.6)));
-        assert!(almost_eq(modulus_vec3(vec3(300.0, 500.44, 200.55), SPACE_SIZE), vec3(0.0, 0.44, 0.55)));
-        assert!(almost_eq(modulus_vec3(vec3(-3., -0.0, -2.), SPACE_SIZE), modulus_vec3(vec3(97., 100., 98.), SPACE_SIZE)));
-        assert!(almost_eq(modulus_vec3(vec3(-13., 3., 115.), SPACE_SIZE), vec3(87., 3., 15.)));
+        assert!(almost_eq(
+            modulus_vec3(vec3(101.3, 102.4, 103.6), SPACE_SIZE),
+            vec3(1.3, 2.4, 3.6)
+        ));
+        assert!(almost_eq(
+            modulus_vec3(vec3(300.0, 500.44, 200.55), SPACE_SIZE),
+            vec3(0.0, 0.44, 0.55)
+        ));
+        assert!(almost_eq(
+            modulus_vec3(vec3(-3., -0.0, -2.), SPACE_SIZE),
+            modulus_vec3(vec3(97., 100., 98.), SPACE_SIZE)
+        ));
+        assert!(almost_eq(
+            modulus_vec3(vec3(-13., 3., 115.), SPACE_SIZE),
+            vec3(87., 3., 15.)
+        ));
     }
 
     #[test]
@@ -323,9 +338,18 @@ mod tests {
         assert!(mod_distance(vec3(10., 20., 30.), vec3(110., 120., 130.)) < 1e-3);
         assert!(mod_distance(vec3(10.2, 33.22, 3.1), vec3(5.6, 20.0, 49.3)) - 48.273889 < 1e-3);
         assert!(mod_distance(vec3(3.5, 88.6, 0.), vec3(198.3, 101.2, -130.)) - 32.951479 < 1e-3);
-        assert!(mod_distance(vec3(0.33333333, 0.44444444, 0.55555555), vec3(-0.33333333, -0.44444444, -0.55555555)) - 1.571348 < 1e-3);
-        assert!(mod_distance(vec3(100000000., 100000000., 100000000.), vec3(-200., -200., -200.)) < 1e-3);
+        assert!(
+            mod_distance(
+                vec3(0.33333333, 0.44444444, 0.55555555),
+                vec3(-0.33333333, -0.44444444, -0.55555555)
+            ) - 1.571348
+                < 1e-3
+        );
+        assert!(
+            mod_distance(
+                vec3(100000000., 100000000., 100000000.),
+                vec3(-200., -200., -200.)
+            ) < 1e-3
+        );
     }
 }
-
-

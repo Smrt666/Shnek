@@ -67,7 +67,6 @@ impl FoodFactory {
                         self.all_the_apples.push(Food::new_random(SPACE_SIZE, 2));
                     }
                 }
-                
 
                 // raise_max_food(food_factory);
             }
