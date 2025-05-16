@@ -1,4 +1,5 @@
 use crate::draw_utils::Drawable;
+use crate::draw_utils::SPACE_SIZE;
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
@@ -21,9 +22,9 @@ pub struct Food {
 }
 
 pub struct FoodFactory {
-    spawn_region: f32,
-    quality_range: (u32, u32),
-    all_the_apples: Vec<Food>,
+    // spawn_region: f32,
+    // quality_range: (u32, u32),
+    pub all_the_apples: Vec<Food>,
     max_food: u32,
     // size_range: Vec<u32>,
     // color_range: Vec<Color>,
@@ -32,8 +33,8 @@ pub struct FoodFactory {
 impl FoodFactory {
     pub fn new() -> Self {
         Self {
-            spawn_region: 50.,
-            quality_range: (1, 1),
+            // spawn_region: SPACE_SIZE,
+            // quality_range: (1, 1),
             all_the_apples: vec![Food::new_custom(
                 vec3(10., 0., 0.),
                 vec3(3., 3., 3.),
@@ -44,26 +45,27 @@ impl FoodFactory {
         }
     }
 
-    fn get_spawn(&self) -> f32 {
-        self.spawn_region
-    }
+    // fn get_spawn(&self) -> f32 {
+    //     self.spawn_region
+    // }
 
-    pub fn raise_max_food(&mut self) {
-        self.max_food += 1;
-    }
+    // pub fn raise_max_food(&mut self) {
+    //     self.max_food += 1;
+    // }
 
     pub fn check_food_collision(&mut self, snake: &mut Shnek) {
         for &food in self.all_the_apples.clone().iter() {
-            let dist = snake.get_position().distance(food.get_position());
+            let dist = mod_distance(snake.get_position(), food.get_position());
             if dist < 3. {
                 for _ in 0..food.quality {
                     snake.add_segment();
                 }
 
                 self.all_the_apples.retain(|&x| x != food);
-
-                for _ in 0..gen_range(1, self.max_food) {
-                    self.all_the_apples.push(Food::new_random(50., 2));
+                if food.color != BROWN {
+                    for _ in 0..gen_range(1, self.max_food) {
+                        self.all_the_apples.push(Food::new_random(SPACE_SIZE, 2));
+                    }
                 }
 
                 // raise_max_food(food_factory);
@@ -76,10 +78,19 @@ impl FoodFactory {
             food.draw();
         }
     }
+
+    pub fn reset(&mut self) {
+        self.all_the_apples = vec![Food::new_custom(
+            vec3(10., 0., 0.),
+            vec3(3., 3., 3.),
+            1,
+            YELLOW,
+        )]
+    }
 }
 
 impl Food {
-    fn new_custom(position: Vec3, size: Vec3, quality: u32, color: Color) -> Self {
+    pub fn new_custom(position: Vec3, size: Vec3, quality: u32, color: Color) -> Self {
         Self {
             position,
             size,
@@ -99,12 +110,12 @@ impl Food {
         }
     }
 
-    fn get_quality(&self) -> u32 {
-        self.quality
-    }
+    // fn get_quality(&self) -> u32 {
+    //     self.quality
+    // }
 
     fn get_position(&self) -> Vec3 {
-        self.position
+        modulus_vec3(self.position, SPACE_SIZE)
     }
 }
 
