@@ -23,6 +23,7 @@ async fn main() {
         &tobj::GPU_LOAD_OPTIONS,
     )
     .expect("Failed to load OBJ file");
+    let materials = materials.unwrap();
     
     let snake_start_len = 3;
     let mut player = snake::Shnek::new();
@@ -33,8 +34,11 @@ async fn main() {
     }
 
     let mut food_factory = food::FoodFactory::new();
-
-    let grid = draw_utils::Grid::new();
+    for i in 0..models.len() {
+        let model = models[i].clone();
+        let material = materials[i].clone();
+        food_factory.add_modelerial(model, material).await;
+    }
 
     let mut view = movement::View::new();
 
@@ -71,9 +75,8 @@ async fn main() {
         clear_background(DARKGRAY);
         // draw
 
-        grid.draw();
         food_factory.draw_food();
-        player.draw();
+        player.draw(None, None, None);
 
         // Back to screen space, render some text
         set_default_camera();

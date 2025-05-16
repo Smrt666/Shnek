@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+use std::env::current_dir;
 
 use crate::draw_utils::Drawable;
 use crate::snake::*;
+use macroquad::file;
 use macroquad::prelude::*;
 use macroquad::rand::*;
-use macroquad::text;
 use tobj::{Model, Material};
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
@@ -54,11 +55,21 @@ impl FoodFactory {
         }
     }
 
-    fn add_modelerial(&mut self, model: Model, material: Material) {
+    pub async fn add_modelerial(&mut self, model: Model, material: Material) {
         self.models.push(model);
+        let ntexture = match &material.normal_texture {
+            Some(texture_file_name) => texture_file_name.clone(),
+            None => return,
+            
+        };
         self.materials.push(material);
+        let filename = &format!("assets/test_obj/{}", &ntexture.replace("\\\\", "/"));
+        println!("Loading texture: {}", filename);
+        println!("Current dir: {:?}", current_dir().unwrap());
+        println!("file exists: {:?}", std::fs::exists(filename));
         self.textures.insert(
-            material.normal_texture  // TODO: load texture from file
+            ntexture.clone(),
+            Texture2D::from_image(&load_image(filename).await.unwrap()), 
         );
     }
 
