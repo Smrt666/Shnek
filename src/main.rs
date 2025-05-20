@@ -1,8 +1,9 @@
-use std::{fs, env};
+use std::{env::{self, current_dir}, fs};
 
 use draw_utils::Drawable;
-use macroquad::{prelude::*, ui::root_ui};
+use macroquad::{prelude::*, ui::root_ui, file};
 use tobj::load_obj;
+use image::ImageReader;
 
 mod draw_utils;
 mod food;
@@ -24,6 +25,13 @@ async fn main() {
     )
     .expect("Failed to load OBJ file");
     let materials = materials.unwrap();
+
+    let filename = format!("{}/assets/test_obj/textures/Eye_N.jpg", current_dir().unwrap().into_os_string().into_string().unwrap());
+    println!("Loading texture: {}", filename);
+    let file = load_file(&filename).await.unwrap();
+    let abc = ImageReader::open(filename).unwrap().decode().unwrap();
+    let texture = Texture2D::from_rgba8(abc.width() as u16, abc.height() as u16, &abc.to_rgba8());
+    println!("Texture size: {:?}", texture.size());
     
     let snake_start_len = 3;
     let mut player = snake::Shnek::new();
@@ -39,6 +47,7 @@ async fn main() {
         let material = materials[i].clone();
         food_factory.add_modelerial(model, material).await;
     }
+    food_factory.load_meshes();
 
     let mut view = movement::View::new();
 

@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 use std::env::current_dir;
+use std::vec;
 
 use crate::draw_utils::Drawable;
 use crate::snake::*;
-use macroquad::file;
+use image::GenericImageView;
 use macroquad::prelude::*;
 use macroquad::rand::*;
+
+use image::ImageReader;
 use tobj::{Model, Material};
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
@@ -16,13 +19,13 @@ pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     )
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Food {
     pub position: Vec3,
     pub size: Vec3,
     pub quality: u32,
     pub color: Color,
     pub repeat: i32,
+    mesh: Option<Mesh>,
 }
 
 pub struct FoodFactory {
@@ -67,9 +70,12 @@ impl FoodFactory {
         println!("Loading texture: {}", filename);
         println!("Current dir: {:?}", current_dir().unwrap());
         println!("file exists: {:?}", std::fs::exists(filename));
+        let image = ImageReader::open(filename).unwrap().decode().unwrap();
+        let (width, height) = image.dimensions();
+        let bytes = image.to_rgba8();
         self.textures.insert(
             ntexture.clone(),
-            Texture2D::from_image(&load_image(filename).await.unwrap()), 
+            Texture2D::from_rgba8(width as u16, height as u16, &bytes), 
         );
     }
 
@@ -82,27 +88,40 @@ impl FoodFactory {
     }
 
     pub fn check_food_collision(&mut self, snake: &mut Shnek) {
-        for &food in self.all_the_apples.clone().iter() {
-            let dist = snake.get_position().distance(food.get_position());
+        let mut removed = vec![];
+        let mut new_food = vec![];
+        for i in 0..self.all_the_apples.len() {
+            let dist = snake.get_position().distance(self.all_the_apples[i].get_position());
             if dist < 3. {
-                for _ in 0..food.quality {
+                for _ in 0..self.all_the_apples[i].quality {
                     snake.add_segment();
                 }
-
-                self.all_the_apples.retain(|&x| x != food);
-
-                for _ in 0..gen_range(1, self.max_food) {
-                    self.all_the_apples.push(Food::new_random(50., 2));
-                }
-
+                removed.push(i);
                 // raise_max_food(food_factory);
+                
+                for _ in 0..gen_range(1, self.max_food) {
+                    new_food.push(Food::new_random(50., 2));
+                }
             }
         }
+        for i in removed {
+            self.all_the_apples.remove(i);
+        }
+        for food in new_food {
+            self.all_the_apples.push(food);
+        }
+        self.load_meshes();
     }
 
     pub fn draw_food(&self) {
         for food in self.all_the_apples.iter() {
             food.draw(Some(&self.models), Some(&self.materials), Some(&self.textures));
+        }
+    }
+
+    pub fn load_meshes(&mut self) {
+        for food in self.all_the_apples.iter_mut() {
+            food.load_mesh(&self.models, &self.materials, &self.textures);
         }
     }
 }
@@ -115,6 +134,7 @@ impl Food {
             quality,
             color,
             repeat: 5,
+            mesh: None,
         }
     }
 
@@ -125,6 +145,7 @@ impl Food {
             quality: gen_range(1, max_quality),
             color: YELLOW,
             repeat: 5,
+            mesh: None,
         }
     }
 
@@ -135,11 +156,39 @@ impl Food {
     fn get_position(&self) -> Vec3 {
         self.position
     }
+
+    pub fn load_mesh(&mut self, models: &Vec<Model>, materials: &Vec<Material>, textures: &HashMap<String, Texture2D>) {
+        if self.mesh.is_some() {
+            return;
+        }
+        for model in models.iter() {
+            let mat_id = model.mesh.material_id.unwrap_or(0);
+            let material = &materials.get(mat_id);
+            let material = match material {
+                Some(material) => material,
+                None => continue,
+            };
+            let mesh = tobj_model_to_mesh(model, material, textures);
+            println!("Texture is here: {}", mesh.texture.is_some());
+            self.mesh = Some(mesh);
+        }
+    }
 }
 
 fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<String, Texture2D>) -> Mesh {
     let mut vertices: Vec<Vertex> = Vec::new();
     let mut indices: Vec<u16> = Vec::new();
+    let texture = match &material.normal_texture {
+        Some(texture_file_name) => textures.get(texture_file_name),
+        None => None,
+    };
+
+    let texsize = match texture {
+        Some(texture) => vec2(texture.width() as f32, texture.height() as f32),
+        None => vec2(1., 1.),
+        
+    };
+
     for i in model.mesh.indices.iter() {
         let i = *i as usize;
         let x = model.mesh.positions[i * 3];
@@ -171,16 +220,13 @@ fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<Str
         });
         indices.push(i as u16);
     }
-    let texture = match &material.normal_texture {
-        Some(texture_file_name) => textures.get(texture_file_name),
-        None => None,
-    };
+    
     Mesh { vertices, indices: indices, texture: texture.cloned()}
 }
 
 impl Drawable for Food {
     fn get_repeat(&self) -> i32 {
-        self.repeat
+        1
     }
 
     fn get_position(&self) -> Vec3 {
@@ -188,16 +234,36 @@ impl Drawable for Food {
     }
 
     fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<Model>>, materials: Option<&Vec<Material>>, textures: Option<&HashMap<String, Texture2D>>) {
-        match (models, materials, textures) {
-            (Some(models), Some(materials), Some(textures)) => {
-                for model in models.iter() {
-                    let mat_id = model.mesh.material_id.unwrap_or(0);
-                    let material = &materials[mat_id];
-                    let mesh = tobj_model_to_mesh(model, material, textures);
-                    draw_mesh(&mesh);
+        match &self.mesh {
+            Some(mesh) => {
+                let mut i = 0;
+                let n = 300;
+                let vertices: Vec<Vertex> = mesh.vertices.iter().map(|v| Vertex {
+                    position: v.position * 100. + position,
+                    uv: v.uv,
+                    color: [50, 50, 0, 0],
+                    normal: v.normal,
+                }).collect();
+
+                while (i + 1) * n < mesh.indices.len() {
+                    let tmp = Mesh {
+                        vertices: vertices.clone(),
+                        indices: mesh.indices[i * n..(i + 1) * n].to_vec(),
+                        texture: mesh.texture.clone(),
+                    };
+                    draw_mesh(&tmp);
+                    i += 1;
+                }
+                if mesh.indices.len() % n != 0 {
+                    let tmp = Mesh {
+                        vertices: vertices,
+                        indices: mesh.indices[i * n..].to_vec(),
+                        texture: mesh.texture.clone(),
+                    };
+                    draw_mesh(&tmp);
                 }
             }
-            _ => {
+            None => {
                 draw_cube(position, self.size, None, self.color);
             }
         }
