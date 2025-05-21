@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use macroquad::prelude::*;
-use tobj::OFFLINE_RENDERING_LOAD_OPTIONS;
 // use macroquad::rand::*;
 
 pub const SPACE_SIZE: f32 = 100.0;
@@ -16,6 +15,38 @@ pub trait Drawable {
     fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<tobj::Model>>, materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>);
 
     fn draw(&self, models: Option<&Vec<tobj::Model>>, materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>) {
+        let repeat = self.get_repeat();
+        let origin = self.get_position();
+        for i in -repeat..=repeat {
+            for j in -repeat..=repeat {
+                for k in -repeat..=repeat {
+                    let position = vec3(
+                        i as f32 * SPACE_SIZE,
+                        j as f32 * SPACE_SIZE,
+                        k as f32 * SPACE_SIZE,
+                    );
+                    let position = position + origin;
+                    let saturation =
+                        1.0 - (i * i + j * j + k * k) as f32 / (repeat * repeat * 3) as f32;
+                    let saturation = saturation.max(0.0);
+
+                    self.draw_at(position, saturation, models, materials, textures);
+                }
+            }
+        }
+    }
+}
+
+pub trait UDrawable {
+    /// Returns the number of times to repeat the object in each direction.
+    fn get_repeat(&self) -> i32;
+
+    /// Returns the position of the object.
+    fn get_position(&self) -> Vec3;
+
+    unsafe fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<tobj::Model>>, materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>);
+
+    unsafe fn draw(&self, models: Option<&Vec<tobj::Model>>, materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>) {
         let repeat = self.get_repeat();
         let origin = self.get_position();
         for i in -repeat..=repeat {

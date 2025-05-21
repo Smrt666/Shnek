@@ -84,7 +84,9 @@ async fn main() {
         clear_background(DARKGRAY);
         // draw
 
-        food_factory.draw_food();
+        unsafe {
+            food_factory.draw_food();
+        }
         player.draw(None, None, None);
 
         // Back to screen space, render some text

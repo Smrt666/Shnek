@@ -2,11 +2,12 @@ use std::collections::HashMap;
 use std::env::current_dir;
 use std::vec;
 
-use crate::draw_utils::Drawable;
+use crate::draw_utils::{Drawable, UDrawable};
 use crate::snake::*;
 use image::GenericImageView;
 use macroquad::prelude::*;
 use macroquad::rand::*;
+use macroquad::window::get_internal_gl;
 
 use image::ImageReader;
 use tobj::{Model, Material};
@@ -113,7 +114,7 @@ impl FoodFactory {
         self.load_meshes();
     }
 
-    pub fn draw_food(&self) {
+    pub unsafe  fn draw_food(&self) {
         for food in self.all_the_apples.iter() {
             food.draw(Some(&self.models), Some(&self.materials), Some(&self.textures));
         }
@@ -224,7 +225,7 @@ fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<Str
     Mesh { vertices, indices: indices, texture: texture.cloned()}
 }
 
-impl Drawable for Food {
+impl UDrawable for Food {
     fn get_repeat(&self) -> i32 {
         1
     }
@@ -233,7 +234,7 @@ impl Drawable for Food {
         self.position
     }
 
-    fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<Model>>, materials: Option<&Vec<Material>>, textures: Option<&HashMap<String, Texture2D>>) {
+    unsafe fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<Model>>, materials: Option<&Vec<Material>>, textures: Option<&HashMap<String, Texture2D>>) {
         match &self.mesh {
             Some(mesh) => {
                 let mut i = 0;
@@ -245,6 +246,13 @@ impl Drawable for Food {
                     normal: v.normal,
                 }).collect();
 
+                let ctx = get_internal_gl();
+                // let texid = ctx.quad_context.new_texture_from_rgba8(mesh.texture.unwrap().width() as u16, mesh.texture.unwrap().height() as u16, &mesh.texture.unwrap().get_texture_data().bytes);
+                let tx = match &mesh.texture {
+                    Some(tx) => Some(tx),
+                    None => None,
+                };
+                ctx.quad_gl.texture(tx);
                 while (i + 1) * n < mesh.indices.len() {
                     let tmp = Mesh {
                         vertices: vertices.clone(),
