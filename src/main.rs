@@ -5,6 +5,9 @@ use macroquad::{audio::set_sound_volume, prelude::*, ui::{hash, root_ui, Skin}};
 // use std::thread::sleep;
 use macroquad::audio::{load_sound, play_sound, play_sound_once, PlaySoundParams};
 
+use std::env;
+use std::fs;
+
 mod draw_utils;
 mod food;
 mod movement;
@@ -16,10 +19,23 @@ enum GameState {
     Running,
     Paused,
     GameOver,
+    Score
 }
 
-#[macroquad::main("Shnek")]
+fn window_conf() -> Conf {
+    Conf {
+        // window_title: "My Microquad Window".to_owned(),
+        // window_width: 800,
+        // window_height: 600,
+        fullscreen: true,
+        ..Default::default()
+    }
+}
+
+
+#[macroquad::main(window_conf)]
 async fn main() {
+    // set_fullscreen(true);
     let test_cube = draw_utils::Cube {
         position: vec3(-10., 0., 0.),
         size: vec3(5., 5., 5.),
@@ -45,6 +61,9 @@ async fn main() {
 
     let mut high_score = 0;
 
+
+
+// Buttons
 
     let window_background = load_image("assets/Solid_black.png").await.unwrap();
     // let button_background = load_image("assets/green_button.png").await.unwrap();
@@ -119,6 +138,10 @@ async fn main() {
                 );
         }
 
+        if is_key_pressed(KeyCode::Backspace) {
+            game_state = GameState::GameOver
+        }
+
 
         if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
             game_state = match game_state {
@@ -126,6 +149,7 @@ async fn main() {
                 GameState::Running => GameState::Paused,
                 GameState::Paused => GameState::Running,
                 GameState::GameOver => GameState::GameOver,
+                GameState::Score => GameState::GameOver,
             };
         }
 
@@ -213,6 +237,7 @@ async fn main() {
                         if game_state == GameState::GameOver {
                             if ui.button(vec2(45.0, 50.0), "Score") {
                             // play_sound_once(&button_sound);
+                            game_state = GameState::Score;
                             play_sound(&button_sound, PlaySoundParams { looped: false, volume: 0.01 });
 
                             }
@@ -236,28 +261,54 @@ async fn main() {
                     },
                 );
         }
+
+        //Score screen
+
+        if game_state == GameState::Score {
+            let window_size = vec2(250., 100.);
+            root_ui().window(
+                hash!(),
+                vec2(
+                    screen_width() - window_size.x,
+                    screen_height() - window_size.y
+                ),
+                window_size,
+                |ui| {
+                    // ui.label(vec2(10.0, 0.0), "Scores");
+
+                if ui.button(vec2(-15., -30.), "Back") {
+                    game_state = GameState::GameOver
+                }
+            }
+            );
+
+            draw_rectangle(
+                0.0,
+                0.0,
+                screen_width(),
+                screen_height(),
+                BLACK);
+
+            let contents = fs::read_to_string("assets/scores.txt")
+                .expect("Should have been able to read the file");
+
+                draw_text(
+                &format!("score: {}", contents),
+                10.0,
+                50.0,
+                100.0,
+                WHITE,);
+
+            
+        }
+
+
+        // request_new_screen_size();
+        next_frame().await;
+
+}
         
 
-
-        // if game_state == GameState::Paused || game_state == GameState::GameOver {
-            
-            // if game_state == GameState::Paused && root_ui().button(0.5 * screen_size, "Resume") {
-            //     game_state = GameState::Running;
-            // }
-            // if root_ui().button(0.5 * screen_size + vec2(0., 25.), "Reset") {
-            //     player.set_position(0., 0., 0.);
-            //     player.set_direction(vec3(1., 0., 0.));
-            //     player.reset();
-            //     view.reset();
-            //     food_factory.reset();
-            //     for _ in 0..snake_start_len {
-            //         player.add_segment();
-            //     }
-            //     game_state = GameState::Running;
-            // }
-            // if root_ui().button(0.5 * screen_size + vec2(0., 50.), "Quit") {
-            //     break;
-            // }
 
 
             // // let mut speed_input = player.get_speed().to_string();
@@ -283,6 +334,5 @@ async fn main() {
         //     ctx.quad_context.commit_frame();
         // }
 
-        next_frame().await;
     }
-}
+
