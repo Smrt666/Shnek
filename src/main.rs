@@ -12,6 +12,7 @@ mod draw_utils;
 mod food;
 mod movement;
 mod snake;
+mod score;
 
 #[derive(Debug, PartialEq)]
 enum GameState {
@@ -60,6 +61,8 @@ async fn main() {
     let mut game_state = GameState::MainMenu;
 
     let mut high_score = 0;
+
+    let mut score_file = score::Score::new();
 
 
 
@@ -240,6 +243,7 @@ async fn main() {
                             game_state = GameState::Score;
                             play_sound(&button_sound, PlaySoundParams { looped: false, volume: 0.01 });
 
+
                             }
                         }
 
@@ -250,6 +254,7 @@ async fn main() {
                             player.reset();
                             view.reset();
                             food_factory.reset();
+                            score_file.reset();
                             for _ in 0..snake_start_len {
                                 player.add_segment();
                             }
@@ -282,6 +287,9 @@ async fn main() {
             }
             );
 
+            score_file.write(score);
+
+
             draw_rectangle(
                 0.0,
                 0.0,
@@ -289,14 +297,14 @@ async fn main() {
                 screen_height(),
                 BLACK);
 
-            let contents = fs::read_to_string("assets/scores.txt")
-                .expect("Should have been able to read the file");
+            let contents = score_file.read();
 
-                draw_text(
-                &format!("score: {}", contents),
+                draw_multiline_text(
+                &format!("score:\n{}", contents),
                 10.0,
                 50.0,
                 100.0,
+                None,
                 WHITE,);
 
             
