@@ -40,12 +40,12 @@ enum GameState {
 #[macroquad::main("Schnek")]
 async fn main() {
     // set_fullscreen(true);
-    let test_cube = draw_utils::Cube {
-        position: vec3(-10., 0., 0.),
-        size: vec3(5., 5., 5.),
-        color: RED,
-        repeat: 10,
-    };
+    // let test_cube = draw_utils::Cube {
+    //     position: vec3(-10., 0., 0.),
+    //     size: vec3(5., 5., 5.),
+    //     color: RED,
+    //     repeat: 10,
+    // };
 
     let snake_start_len = 3;
     let mut player = snake::Shnek::new();
@@ -176,7 +176,7 @@ async fn main() {
         grid.draw();
         food_factory.draw_food();
         player.draw();
-        test_cube.draw();
+        // test_cube.draw();
 
         // Back to screen space, render some text
         set_default_camera();
@@ -198,6 +198,7 @@ async fn main() {
             30.0,
             BLACK,
         );
+
 
         // Pause menu
 
@@ -241,6 +242,7 @@ async fn main() {
 
                         
                         if ui.button(vec2(50.0, 150.0), "Reset") {
+                            high_score = 0;
                             player.set_position(0., 0., 0.);
                             player.set_direction(vec3(1., 0., 0.));
                             player.reset();
@@ -286,8 +288,9 @@ async fn main() {
             );
             root_ui().move_window(menu_id, window_pos);
 
+            let previous = score_file.read();
 
-            score_file.write(score);
+            score_file.write(previous, high_score);
 
 
             draw_rectangle(
@@ -297,15 +300,42 @@ async fn main() {
                 screen_height(),
                 BLACK);
 
-            let contents = score_file.read();
+            let contents = &score_file.read();
 
                 draw_multiline_text(
-                &format!("score:\n{}", contents),
+                &format!("scores:\n{}", *contents),
                 10.0,
                 50.0,
                 100.0,
                 None,
                 WHITE,);
+
+
+                // Collect into a Vec<i32> (ignoring empty lines)
+                let mut numbers: Vec<i32> = contents
+                    .lines()
+                    .filter_map(|line| line.trim().parse::<i32>().ok())
+                    .collect();
+
+                // Sort descending
+                numbers.sort_by(|a, b| b.cmp(a));
+
+                // Take top 3
+                let top3: Vec<i32> = numbers.into_iter().take(3).collect();
+
+                let best  = top3
+                    .iter()
+                    .map(|n| n.to_string())
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
+                draw_multiline_text(
+                    &format!("best: \n{}", best),
+                    screen_width() - 250.,
+                    50.,
+                    100.,
+                    None,
+                    GOLD);
 
             
         }

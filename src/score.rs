@@ -18,17 +18,17 @@ impl Score {
     }
 
 
-    pub fn write(&mut self, score: usize) {
+    pub fn write(&mut self, previous: String, score: usize) {
 
         if self.do_write == true {
             let mut write_file = OpenOptions::new()
-                .append(true)
+                .write(true)    //append ro write
                 .create(true)
                 .open(self.file.clone())
                 .expect("Failed to open file for appending");
 
-            writeln!(write_file, "{}", score).expect("Failed to append");
-            // writeln!(file, "Another appended line!").expect("Failed to append");
+            write!(write_file, "{}", score).expect("Failed to append");
+            write!(write_file, "\n{}", previous).expect("Failed to append");
 
             self.do_write = false;
         }
