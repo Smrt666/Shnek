@@ -1,4 +1,4 @@
-use std::fs;
+use std::fs::{self, read};
 use std::fs::OpenOptions;
 use std::io::Write; // brings `write!` and `writeln!`
 
@@ -40,7 +40,7 @@ impl Score {
 
     pub fn read(&self) -> String {
          return fs::read_to_string(self.file.clone())
-                .expect("Should have been able to read the file");
+                .unwrap_or_else(|_| String::new())
     }
 }
 
