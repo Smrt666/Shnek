@@ -1,18 +1,21 @@
 use draw_utils::Drawable;
-use macroquad::{audio::set_sound_volume, prelude::*, ui::{hash, root_ui, Skin}};
+use macroquad::{audio::set_sound_volume, prelude::*, ui::{hash, root_ui, widgets::Button, Skin}};
 // use crate::miniquad::window::screen_size;
 // use std::time::Duration;
 // use std::thread::sleep;
 use macroquad::audio::{load_sound, play_sound, play_sound_once, PlaySoundParams};
 
-use std::env;
-use std::fs;
+use crate::button::{load_button_sound, load_button_style, load_font, load_label_style, load_ui_skin, load_window_background, load_window_style};
+
+// use std::env;
+// use std::fs;
 
 mod draw_utils;
 mod food;
 mod movement;
 mod snake;
 mod score;
+mod button;
 
 #[derive(Debug, PartialEq)]
 enum GameState {
@@ -23,18 +26,18 @@ enum GameState {
     Score
 }
 
-fn window_conf() -> Conf {
-    Conf {
-        // window_title: "My Microquad Window".to_owned(),
-        // window_width: 800,
-        // window_height: 600,
-        fullscreen: true,
-        ..Default::default()
-    }
-}
+// fn window_conf() -> Conf {
+//     Conf {
+//         // window_title: "My Microquad Window".to_owned(),
+//         // window_width: 800,
+//         // window_height: 600,
+//         fullscreen: true,
+//         ..Default::default()
+//     }
+// }
 
 
-#[macroquad::main(window_conf)]
+#[macroquad::main("Schnek")]
 async fn main() {
     // set_fullscreen(true);
     let test_cube = draw_utils::Cube {
@@ -64,43 +67,24 @@ async fn main() {
 
     let mut score_file = score::Score::new();
 
+    // let menu_buttons_settings = button::MenuButtons::new(
+    //     // load_window_background("assets/Solid_black.png").await.unwrap(),
+    //     // load_font("assets/yoster.ttf").await,
+    //     load_window_style(load_window_background("assets/Solid_black.png").await).await,
+    //     load_button_style(load_font("assets/yoster.ttf").await).await,
+    //     load_label_style(load_font("assets/yoster.ttf").await).await,
+    //     // load_ui_skin("", "", "").await,
+    //     load_button_sound("assets/spongebob-fog-horn.wav").await
 
+    // );
 
-// Buttons
-
-    let window_background = load_image("assets/Solid_black.png").await.unwrap();
-    // let button_background = load_image("assets/green_button.png").await.unwrap();
-    // let button_clicked_background = load_image("assets/pressed_button.png").await.unwrap();
-    let font = load_file("assets/yoster.ttf").await.unwrap();
-
-
-    let window_style = root_ui()
-        .style_builder()
-        .background(window_background)
-        .background_margin(RectOffset::new(32.0, 76.0, 44.0, 20.0))
-        .margin(RectOffset::new(0.0, -40.0, 0.0, 0.0))
-        .build();
-
-
-    let button_style = root_ui()
-        .style_builder()
-        // .background(button_background)
-        // .background_clicked(button_clicked_background)
-        .background_margin(RectOffset::new(16.0, 16.0, 16.0, 16.0))
-        .margin(RectOffset::new(16.0, 0.0, -8.0, -8.0))
-        .font(&font)
-        .unwrap()
-        .text_color(BLACK)
-        .font_size(64)
-        .build();
-
-    let label_style = root_ui()
-        .style_builder()
-        .font(&font)
-        .unwrap()
-        .text_color(WHITE)
-        .font_size(28)
-        .build();
+    let window_style = load_window_style(load_window_background("assets/Solid_black.png").await).await;
+    let button_style = load_button_style(load_font("assets/yoster.ttf").await).await;
+    let label_style = load_label_style(load_font("assets/yoster.ttf").await).await;
+    // load_ui_skin("", "", "").await,
+    let button_sound= load_button_sound("assets/spongebob-fog-horn.wav").await;
+    
+    // root_ui().push_skin(&load_ui_skin(window_style, button_style, label_style).await);
 
     let ui_skin = Skin {
         window_style,
@@ -110,9 +94,6 @@ async fn main() {
     };
     root_ui().push_skin(&ui_skin);
 
-    let button_sound = load_sound("assets/spongebob-fog-horn.wav").await.unwrap();
-    
-
     // play_sound(main_theme)...
     // set_sound_volume(&button_sound, 0.);
 
@@ -120,14 +101,19 @@ async fn main() {
 
     loop {
 
+
+
         if game_state == GameState::MainMenu {
+            
             let window_size = vec2(370.0, 320.0);
+            let window_pos = vec2(
+                screen_width() / 2.0 - window_size.x / 2.0,
+                screen_height() / 2.0 - window_size.y / 2.0,
+            );
+            let main_menu_id = hash!();
             root_ui().window(
-                    hash!(),
-                    vec2(
-                        screen_width() / 2.0 - window_size.x / 2.0,
-                        screen_height() / 2.0 - window_size.y / 2.0,
-                    ),
+                    main_menu_id,
+                    window_pos,
                     window_size,
                     |ui| {
                         ui.label(vec2(80.0, -34.0), "Main Menu");
@@ -139,7 +125,11 @@ async fn main() {
                         }
                     },
                 );
-        }
+            root_ui().move_window(main_menu_id, window_pos);
+            }
+
+
+        
 
         if is_key_pressed(KeyCode::Backspace) {
             game_state = GameState::GameOver
@@ -212,7 +202,7 @@ async fn main() {
         // Pause menu
 
         if game_state == GameState::Paused || game_state == GameState::GameOver {
-            let window_size = vec2(400.0, 500.0);
+            
             draw_rectangle(
                 // draw a semi-transparent rectangle over the screen
                 0.0,
@@ -222,13 +212,16 @@ async fn main() {
                 color_u8!(0, 0, 0, 128),
             );
 
+
+            let window_size = vec2(400.0, 500.0);
+            let window_pos = vec2(
+                screen_width() / 2.0 - window_size.x / 2.0,
+                screen_height() / 2.0 - window_size.y / 2.0,
+            );
+            let menu_id = hash!();
             root_ui().window(
-                    hash!(),
-                    vec2(
-                        screen_width() / 2.0 - window_size.x / 2.0,
-                        screen_height() / 2.0 - window_size.y / 2.0,
-                        // 0.0, 0.0
-                    ),
+                    menu_id,
+                    window_pos,
                     window_size,
                     |ui| {
                         ui.label(vec2(10.0, 0.0), "Paused");
@@ -242,7 +235,6 @@ async fn main() {
                             // play_sound_once(&button_sound);
                             game_state = GameState::Score;
                             play_sound(&button_sound, PlaySoundParams { looped: false, volume: 0.01 });
-
 
                             }
                         }
@@ -265,18 +257,24 @@ async fn main() {
                         }
                     },
                 );
+            root_ui().move_window(menu_id, window_pos);
+
         }
 
         //Score screen
 
         if game_state == GameState::Score {
+
             let window_size = vec2(250., 100.);
-            root_ui().window(
-                hash!(),
-                vec2(
+            let window_pos = vec2(
                     screen_width() - window_size.x,
                     screen_height() - window_size.y
-                ),
+                );
+            let menu_id = hash!();
+            
+            root_ui().window(
+                menu_id,
+                window_pos,
                 window_size,
                 |ui| {
                     // ui.label(vec2(10.0, 0.0), "Scores");
@@ -286,6 +284,8 @@ async fn main() {
                 }
             }
             );
+            root_ui().move_window(menu_id, window_pos);
+
 
             score_file.write(score);
 
@@ -309,6 +309,8 @@ async fn main() {
 
             
         }
+
+        
 
 
         // request_new_screen_size();
@@ -342,5 +344,5 @@ async fn main() {
         //     ctx.quad_context.commit_frame();
         // }
 
-    }
+}
 
