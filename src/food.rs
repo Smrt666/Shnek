@@ -61,13 +61,13 @@ impl FoodFactory {
 
     pub async fn add_modelerial(&mut self, model: Model, material: Material) {
         self.models.push(model);
-        let ntexture = match &material.normal_texture {
+        let ntexture = match &material.diffuse_texture {
             Some(texture_file_name) => texture_file_name.clone(),
             None => return,
             
         };
         self.materials.push(material);
-        let filename = &format!("assets/test_obj/{}", &ntexture.replace("\\\\", "/"));
+        let filename = &format!("assets/head_test/{}", &ntexture.replace("\\\\", "/"));
         println!("Loading texture: {}", filename);
         println!("Current dir: {:?}", current_dir().unwrap());
         println!("file exists: {:?}", std::fs::exists(filename));
@@ -179,7 +179,7 @@ impl Food {
 fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<String, Texture2D>) -> Mesh {
     let mut vertices: Vec<Vertex> = Vec::new();
     let mut indices: Vec<u16> = Vec::new();
-    let texture = match &material.normal_texture {
+    let texture = match &material.diffuse_texture {
         Some(texture_file_name) => textures.get(texture_file_name),
         None => None,
     };
@@ -197,32 +197,32 @@ fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<Str
         let z = model.mesh.positions[i * 3 + 2];
 
         // Could not exist
-        let u = model.mesh.texcoords.get(i * 2);
-        let v = model.mesh.texcoords.get(i * 2 + 1);
-        let uv = match (u, v) {
-            (Some(u), Some(v)) => vec2(*u, *v),
-            _ => vec2(0.0, 0.0),
-        };
+        let u = model.mesh.texcoords.get(i * 2).unwrap() * texsize.x;
+        let v = model.mesh.texcoords.get(i * 2 + 1).unwrap() * texsize.y;
+        let uv = vec2(u, v);
 
         // Could not exist (normals are not used by default macroquad)
         let nx = model.mesh.normals.get(i * 3);
         let ny = model.mesh.normals.get(i * 3 + 1);
         let nz = model.mesh.normals.get(i * 3 + 2);
         let normal = match (nx, ny, nz) {
-            (Some(nx), Some(ny), Some(nz)) => vec4(*nx, *ny, *nz, 1.0),
-            _ => vec4(0.0, 0.0, 0.0, 1.0),
+            (Some(nx), Some(ny), Some(nz)) => vec4(*nx, *ny, *nz, 0.0),
+            _ => panic!("nope2"),
         };
 
         vertices.push(Vertex {
             position: vec3(x, y, z),
-            uv: uv,
-            color: [0, 0, 0, 0],
-            normal: normal,
+            uv,
+            color: [100, 0, 0, 0],
+            normal,
         });
         indices.push(i as u16);
     }
+
+    println!("Vertices: {:?}", vertices);
+    println!("Indices: {:?}", indices);
     
-    Mesh { vertices, indices: indices, texture: texture.cloned()}
+    Mesh { vertices, indices, texture: texture.cloned()}
 }
 
 impl UDrawable for Food {
@@ -237,41 +237,10 @@ impl UDrawable for Food {
     unsafe fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<Model>>, materials: Option<&Vec<Material>>, textures: Option<&HashMap<String, Texture2D>>) {
         match &self.mesh {
             Some(mesh) => {
-                let mut i = 0;
-                let n = 300;
-                let vertices: Vec<Vertex> = mesh.vertices.iter().map(|v| Vertex {
-                    position: v.position * 100. + position,
-                    uv: v.uv,
-                    color: [50, 50, 0, 0],
-                    normal: v.normal,
-                }).collect();
-
-                let ctx = get_internal_gl();
-                // let texid = ctx.quad_context.new_texture_from_rgba8(mesh.texture.unwrap().width() as u16, mesh.texture.unwrap().height() as u16, &mesh.texture.unwrap().get_texture_data().bytes);
-                let tx = match &mesh.texture {
-                    Some(tx) => Some(tx),
-                    None => None,
-                };
-                ctx.quad_gl.texture(tx);
-                while (i + 1) * n < mesh.indices.len() {
-                    let tmp = Mesh {
-                        vertices: vertices.clone(),
-                        indices: mesh.indices[i * n..(i + 1) * n].to_vec(),
-                        texture: mesh.texture.clone(),
-                    };
-                    draw_mesh(&tmp);
-                    i += 1;
-                }
-                if mesh.indices.len() % n != 0 {
-                    let tmp = Mesh {
-                        vertices: vertices,
-                        indices: mesh.indices[i * n..].to_vec(),
-                        texture: mesh.texture.clone(),
-                    };
-                    draw_mesh(&tmp);
-                }
+                draw_mesh(&mesh);
             }
             None => {
+                println!("nope");
                 draw_cube(position, self.size, None, self.color);
             }
         }

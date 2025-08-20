@@ -20,13 +20,13 @@ enum GameState {
 #[macroquad::main("Shnek")]
 async fn main() {
     let (models, materials) = load_obj(
-        "assets/test_obj/eyeball.obj",
+        "assets/head_test/snake_head.obj",
         &tobj::GPU_LOAD_OPTIONS,
     )
     .expect("Failed to load OBJ file");
     let materials = materials.unwrap();
 
-    let filename = format!("{}/assets/test_obj/textures/Eye_N.jpg", current_dir().unwrap().into_os_string().into_string().unwrap());
+    let filename = "assets/head_test/snake_head.png";
     println!("Loading texture: {}", filename);
     let file = load_file(&filename).await.unwrap();
     let abc = ImageReader::open(filename).unwrap().decode().unwrap();
