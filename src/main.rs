@@ -5,7 +5,7 @@ use macroquad::{audio::set_sound_volume, prelude::*, ui::{hash, root_ui, widgets
 // use std::thread::sleep;
 use macroquad::audio::{load_sound, play_sound, play_sound_once, PlaySoundParams};
 
-use crate::button::{load_button_sound, load_button_style, load_font, load_label_style, load_ui_skin, load_window_background, load_window_style};
+use crate::button::{loading_sound, load_button_style, load_font, load_label_style, load_ui_skin, load_window_background, load_window_style};
 
 // use std::env;
 // use std::fs;
@@ -82,7 +82,10 @@ async fn main() {
     let button_style = load_button_style(load_font("assets/yoster.ttf").await).await;
     let label_style = load_label_style(load_font("assets/yoster.ttf").await).await;
     // load_ui_skin("", "", "").await,
-    let button_sound= load_button_sound("assets/spongebob-fog-horn.wav").await;
+    let collision_sound= loading_sound("assets/spongebob-fog-horn.wav").await;
+    let eat_sound = loading_sound("assets/eating-sound-effect.wav").await;
+    let click = loading_sound("assets/computer-mouse-click.wav").await;
+
     
     // root_ui().push_skin(&load_ui_skin(window_style, button_style, label_style).await);
 
@@ -118,6 +121,7 @@ async fn main() {
                     |ui| {
                         ui.label(vec2(80.0, -34.0), "Main Menu");
                         if ui.button(vec2(65.0, 25.0), "Play") {
+                            play_sound(&click, PlaySoundParams { looped: false, volume: 0.1 });
                             game_state = GameState::Running;
                         }
                         if ui.button(vec2(65.0, 125.0), "Quit") {
@@ -161,10 +165,13 @@ async fn main() {
             }
 
             if player.check_tail_collision() {
+                play_sound(&collision_sound, PlaySoundParams { looped: false, volume: 0.01 });
                 game_state = GameState::GameOver;
             }
 
-            food_factory.check_food_collision(&mut player);
+            if food_factory.check_food_collision(&mut player) {
+                play_sound(&eat_sound, PlaySoundParams { looped: false, volume: 0.1 })
+            }
         }
 
         // Set the camera to follow the player
@@ -228,20 +235,20 @@ async fn main() {
                         ui.label(vec2(10.0, 0.0), "Paused");
                         if game_state == GameState::Paused {
                             if ui.button(vec2(30.0, 50.0), "Resume") {
+                            play_sound(&click, PlaySoundParams { looped: false, volume: 0.1 });
                             game_state = GameState::Running;
                             }
                         }
                         if game_state == GameState::GameOver {
                             if ui.button(vec2(45.0, 50.0), "Score") {
-                            // play_sound_once(&button_sound);
+                            play_sound(&click, PlaySoundParams { looped: false, volume: 0.1 });
                             game_state = GameState::Score;
-                            play_sound(&button_sound, PlaySoundParams { looped: false, volume: 0.01 });
-
                             }
                         }
 
                         
                         if ui.button(vec2(50.0, 150.0), "Reset") {
+                            play_sound(&click, PlaySoundParams { looped: false, volume: 0.1 });
                             high_score = 0;
                             player.set_position(0., 0., 0.);
                             player.set_direction(vec3(1., 0., 0.));
@@ -282,6 +289,7 @@ async fn main() {
                     // ui.label(vec2(10.0, 0.0), "Scores");
 
                 if ui.button(vec2(-15., -30.), "Back") {
+                    play_sound(&click, PlaySoundParams { looped: false, volume: 0.1 });
                     game_state = GameState::GameOver
                 }
             }

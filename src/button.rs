@@ -96,6 +96,11 @@ pub async fn load_ui_skin(window_style: Style, button_style: Style, label_style:
     }
 } 
 
-pub async fn load_button_sound(sound_path: &str) -> Sound {
+pub async fn loading_sound(sound_path: &str) -> Sound {
     load_sound(sound_path).await.unwrap()
-} 
+}
+
+// pub async fn click_sound() {
+//     let click = load_sound("assets/computer-mouse-click-352734.wav").await.unwrap();
+//     play_sound(&click, PlaySoundParams { looped: false, volume: 0.1 });
+// }

@@ -3,6 +3,7 @@ use crate::draw_utils::SPACE_SIZE;
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
+// use macroquad::audio::{load_sound, play_sound, play_sound_once};
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
@@ -53,7 +54,7 @@ impl FoodFactory {
     //     self.max_food += 1;
     // }
 
-    pub fn check_food_collision(&mut self, snake: &mut Shnek) {
+    pub fn check_food_collision(&mut self, snake: &mut Shnek) -> bool {
         for &food in self.all_the_apples.clone().iter() {
             let dist = mod_distance(snake.get_position(), food.get_position());
             if dist < 3. {
@@ -67,10 +68,13 @@ impl FoodFactory {
                         self.all_the_apples.push(Food::new_random(SPACE_SIZE, 2));
                     }
                 }
+                return true
 
                 // raise_max_food(food_factory);
             }
         }
+
+        return false
     }
 
     pub fn draw_food(&self) {
