@@ -237,6 +237,10 @@ impl UDrawable for Food {
     unsafe fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<Model>>, materials: Option<&Vec<Material>>, textures: Option<&HashMap<String, Texture2D>>) {
         match &self.mesh {
             Some(mesh) => {
+                let ctx = get_internal_gl();
+                // let texid = ctx.quad_context.new_texture_from_rgba8(mesh.texture.unwrap().width() as u16, mesh.texture.unwrap().height() as u16, &mesh.texture.unwrap().get_texture_data().bytes);
+
+                ctx.quad_gl.texture(mesh.texture.as_ref());
                 draw_mesh(&mesh);
             }
             None => {
