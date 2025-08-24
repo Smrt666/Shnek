@@ -151,6 +151,7 @@ async fn main() {
         }
 
         let dt = get_frame_time();
+        let score = player.get_length() - snake_start_len;
 
         if game_state == GameState::Running {
             // Only update if not paused
@@ -169,7 +170,7 @@ async fn main() {
                 game_state = GameState::GameOver;
             }
 
-            if food_factory.check_food_collision(&mut player) {
+            if food_factory.check_food_collision(&mut player, score) {
                 play_sound(&eat_sound, PlaySoundParams { looped: false, volume: 0.1 })
             }
         }
@@ -189,7 +190,7 @@ async fn main() {
         set_default_camera();
         draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
 
-        let score = player.get_length() - snake_start_len;
+        
         draw_text(
             &format!("score: {}", score),
             10.0,
