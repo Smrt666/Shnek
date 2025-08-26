@@ -4,11 +4,13 @@ use draw_utils::Drawable;
 use macroquad::{prelude::*, ui::root_ui, file};
 use tobj::load_obj;
 use image::ImageReader;
+use crate::test::TestObject;
 
 mod draw_utils;
 mod food;
 mod movement;
 mod snake;
+mod test;
 
 #[derive(Debug, PartialEq)]
 enum GameState {
@@ -32,7 +34,12 @@ async fn main() {
     let abc = ImageReader::open(filename).unwrap().decode().unwrap();
     let texture = Texture2D::from_rgba8(abc.width() as u16, abc.height() as u16, &abc.to_rgba8());
     println!("Texture size: {:?}", texture.size());
-    
+
+    let mut test_obj;
+    unsafe {
+        test_obj = TestObject::new(models[0].clone(), materials[0].clone());
+    }
+
     let snake_start_len = 3;
     let mut player = snake::Shnek::new();
     player.set_position(0., 0., 0.);
@@ -81,11 +88,12 @@ async fn main() {
         // Set the camera to follow the player
         view.set_camera(player.get_position());
 
-        clear_background(DARKGRAY);
+        clear_background(DARKBLUE);
         // draw
 
         unsafe {
             food_factory.draw_food();
+            test_obj.draw();
         }
         player.draw(None, None, None);
 

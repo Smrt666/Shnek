@@ -114,7 +114,7 @@ impl FoodFactory {
         self.load_meshes();
     }
 
-    pub unsafe  fn draw_food(&self) {
+    pub unsafe fn draw_food(&self) {
         for food in self.all_the_apples.iter() {
             food.draw(Some(&self.models), Some(&self.materials), Some(&self.textures));
         }
@@ -181,12 +181,12 @@ fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<Str
     let mut indices: Vec<u16> = Vec::new();
     let texture = match &material.diffuse_texture {
         Some(texture_file_name) => textures.get(texture_file_name),
-        None => None,
+        None => panic!("No diffuse texture"),
     };
 
     let texsize = match texture {
         Some(texture) => vec2(texture.width() as f32, texture.height() as f32),
-        None => vec2(1., 1.),
+        None => panic!("No texture"),
         
     };
 
@@ -210,8 +210,9 @@ fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<Str
             _ => panic!("nope2"),
         };
 
+        let scale = 100.0;
         vertices.push(Vertex {
-            position: vec3(x, y, z),
+            position: vec3(x * scale, y * scale, z * scale),
             uv,
             color: [100, 0, 0, 0],
             normal,
@@ -240,8 +241,9 @@ impl UDrawable for Food {
                 let ctx = get_internal_gl();
                 // let texid = ctx.quad_context.new_texture_from_rgba8(mesh.texture.unwrap().width() as u16, mesh.texture.unwrap().height() as u16, &mesh.texture.unwrap().get_texture_data().bytes);
 
-                ctx.quad_gl.texture(mesh.texture.as_ref());
-                draw_mesh(&mesh);
+                draw_cube(position, self.size, None, self.color);
+                // ctx.quad_gl.texture(mesh.texture.as_ref());
+                // draw_mesh(&mesh);
             }
             None => {
                 println!("nope");
