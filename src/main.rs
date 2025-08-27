@@ -1,16 +1,12 @@
-use std::{env::{self, current_dir}, fs};
-
-use draw_utils::Drawable;
-use macroquad::{prelude::*, ui::root_ui, file};
-use tobj::load_obj;
-use image::ImageReader;
 use crate::models3d::Model3D;
+use draw_utils::Drawable;
+use macroquad::{prelude::*, ui::root_ui};
 
 mod draw_utils;
 mod food;
+mod models3d;
 mod movement;
 mod snake;
-mod models3d;
 
 #[derive(Debug, PartialEq)]
 enum GameState {
@@ -21,20 +17,6 @@ enum GameState {
 
 #[macroquad::main("Shnek")]
 async fn main() {
-    let (models, materials) = load_obj(
-        "assets/head_test/snake_head.obj",
-        &tobj::GPU_LOAD_OPTIONS,
-    )
-    .expect("Failed to load OBJ file");
-    let materials = materials.unwrap();
-
-    let filename = "assets/head_test/snake_head.png";
-    println!("Loading texture: {}", filename);
-    let file = load_file(&filename).await.unwrap();
-    let abc = ImageReader::open(filename).unwrap().decode().unwrap();
-    let texture = Texture2D::from_rgba8(abc.width() as u16, abc.height() as u16, &abc.to_rgba8());
-    println!("Texture size: {:?}", texture.size());
-
     let test_obj = Model3D::from_file("assets/head_test/snake_head.obj");
 
     let snake_start_len = 3;
@@ -46,12 +28,6 @@ async fn main() {
     }
 
     let mut food_factory = food::FoodFactory::new();
-    for i in 0..models.len() {
-        let model = models[i].clone();
-        let material = materials[i].clone();
-        food_factory.add_modelerial(model, material).await;
-    }
-    food_factory.load_meshes();
 
     let mut view = movement::View::new();
 
@@ -85,14 +61,12 @@ async fn main() {
         // Set the camera to follow the player
         view.set_camera(player.get_position());
 
-        clear_background(DARKBLUE);
+        clear_background(DARKGRAY);
         // draw
 
-        unsafe {
-            food_factory.draw_food();
-            test_obj.draw_meshes();
-        }
-        player.draw(None, None, None);
+        food_factory.draw();
+        test_obj.draw_meshes(Mat4::IDENTITY);
+        player.draw();
 
         // Back to screen space, render some text
         set_default_camera();

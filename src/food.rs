@@ -1,16 +1,11 @@
-use std::collections::HashMap;
-use std::env::current_dir;
 use std::vec;
 
-use crate::draw_utils::{Drawable, UDrawable};
+use crate::draw_utils::Drawable;
 use crate::snake::*;
-use image::GenericImageView;
 use macroquad::prelude::*;
 use macroquad::rand::*;
-use macroquad::window::get_internal_gl;
 
-use image::ImageReader;
-use tobj::{Model, Material};
+use crate::models3d::Model3D;
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
@@ -22,11 +17,10 @@ pub fn random_vec3(min: f32, max: f32) -> Vec3 {
 
 pub struct Food {
     pub position: Vec3,
-    pub size: Vec3,
+    pub up: Vec3,
+    pub front: Vec3,
+    pub size: f32,
     pub quality: u32,
-    pub color: Color,
-    pub repeat: i32,
-    mesh: Option<Mesh>,
 }
 
 pub struct FoodFactory {
@@ -36,48 +30,31 @@ pub struct FoodFactory {
     max_food: u32,
     // size_range: Vec<u32>,
     // color_range: Vec<Color>,
-    models: Vec<Model>,
-    materials: Vec<Material>,
-    textures: HashMap<String, Texture2D>,
+    model: Model3D,
 }
 
 impl FoodFactory {
     pub fn new() -> Self {
-        Self {
+        let model = Model3D::from_file("assets/apfel/apfel.obj");
+        let mut s = Self {
             spawn_region: 50.,
             quality_range: (1, 1),
-            all_the_apples: vec![Food::new_custom(
-                vec3(10., 0., 0.),
-                vec3(3., 3., 3.),
-                1,
-                YELLOW,
-            )],
+            all_the_apples: Vec::new(),
             max_food: 1,
-            models: vec![],
-            materials: vec![],
-            textures: HashMap::new(),
-        }
+            model,
+        };
+        s.new_custom(vec3(10., 10., 10.), 1., 1);
+        s
     }
 
-    pub async fn add_modelerial(&mut self, model: Model, material: Material) {
-        self.models.push(model);
-        let ntexture = match &material.diffuse_texture {
-            Some(texture_file_name) => texture_file_name.clone(),
-            None => return,
-            
-        };
-        self.materials.push(material);
-        let filename = &format!("assets/head_test/{}", &ntexture.replace("\\\\", "/"));
-        println!("Loading texture: {}", filename);
-        println!("Current dir: {:?}", current_dir().unwrap());
-        println!("file exists: {:?}", std::fs::exists(filename));
-        let image = ImageReader::open(filename).unwrap().decode().unwrap();
-        let (width, height) = image.dimensions();
-        let bytes = image.to_rgba8();
-        self.textures.insert(
-            ntexture.clone(),
-            Texture2D::from_rgba8(width as u16, height as u16, &bytes), 
-        );
+    pub fn new_custom(&mut self, position: Vec3, size: f32, quality: u32) {
+        self.all_the_apples.push(Food::new_custom(
+            position,
+            vec3(0., 0., 1.),
+            vec3(0., 1., 0.),
+            size * 0.1,
+            quality,
+        ))
     }
 
     fn get_spawn(&self) -> f32 {
@@ -92,14 +69,16 @@ impl FoodFactory {
         let mut removed = vec![];
         let mut new_food = vec![];
         for i in 0..self.all_the_apples.len() {
-            let dist = snake.get_position().distance(self.all_the_apples[i].get_position());
+            let dist = snake
+                .get_position()
+                .distance(self.all_the_apples[i].get_position());
             if dist < 3. {
                 for _ in 0..self.all_the_apples[i].quality {
                     snake.add_segment();
                 }
                 removed.push(i);
                 // raise_max_food(food_factory);
-                
+
                 for _ in 0..gen_range(1, self.max_food) {
                     new_food.push(Food::new_random(50., 2));
                 }
@@ -111,42 +90,27 @@ impl FoodFactory {
         for food in new_food {
             self.all_the_apples.push(food);
         }
-        self.load_meshes();
-    }
-
-    pub unsafe fn draw_food(&self) {
-        for food in self.all_the_apples.iter() {
-            food.draw(Some(&self.models), Some(&self.materials), Some(&self.textures));
-        }
-    }
-
-    pub fn load_meshes(&mut self) {
-        for food in self.all_the_apples.iter_mut() {
-            food.load_mesh(&self.models, &self.materials, &self.textures);
-        }
     }
 }
 
 impl Food {
-    fn new_custom(position: Vec3, size: Vec3, quality: u32, color: Color) -> Self {
+    fn new_custom(position: Vec3, up: Vec3, front: Vec3, size: f32, quality: u32) -> Self {
         Self {
             position,
+            up,
+            front,
             size,
             quality,
-            color,
-            repeat: 5,
-            mesh: None,
         }
     }
 
     fn new_random(max_pos: f32, max_quality: u32) -> Self {
         Self {
             position: random_vec3(0., max_pos),
-            size: random_vec3(3., 5.),
+            up: vec3(0., 0., 1.),
+            front: vec3(0., 1., 0.),
             quality: gen_range(1, max_quality),
-            color: YELLOW,
-            repeat: 5,
-            mesh: None,
+            size: 0.1,
         }
     }
 
@@ -157,95 +121,26 @@ impl Food {
     fn get_position(&self) -> Vec3 {
         self.position
     }
-
-    pub fn load_mesh(&mut self, models: &Vec<Model>, materials: &Vec<Material>, textures: &HashMap<String, Texture2D>) {
-        if self.mesh.is_some() {
-            return;
-        }
-        for model in models.iter() {
-            let mat_id = model.mesh.material_id.unwrap_or(0);
-            let material = &materials.get(mat_id);
-            let material = match material {
-                Some(material) => material,
-                None => continue,
-            };
-            let mesh = tobj_model_to_mesh(model, material, textures);
-            println!("Texture is here: {}", mesh.texture.is_some());
-            self.mesh = Some(mesh);
-        }
-    }
 }
 
-fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<String, Texture2D>) -> Mesh {
-    let mut vertices: Vec<Vertex> = Vec::new();
-    let mut indices: Vec<u16> = Vec::new();
-    let texture = match &material.diffuse_texture {
-        Some(texture_file_name) => textures.get(texture_file_name),
-        None => panic!("No diffuse texture"),
-    };
-
-    let texsize = match texture {
-        Some(texture) => vec2(texture.width() as f32, texture.height() as f32),
-        None => panic!("No texture"),
-        
-    };
-
-    for i in model.mesh.indices.iter() {
-        let i = *i as usize;
-        let x = model.mesh.positions[i * 3];
-        let y = model.mesh.positions[i * 3 + 1];
-        let z = model.mesh.positions[i * 3 + 2];
-
-        // Could not exist
-        let u = model.mesh.texcoords.get(i * 2).unwrap();
-        let v = model.mesh.texcoords.get(i * 2 + 1).unwrap();
-        let uv = vec2(*u, *v);
-
-        // Could not exist (normals are not used by default macroquad)
-        let nx = model.mesh.normals.get(i * 3);
-        let ny = model.mesh.normals.get(i * 3 + 1);
-        let nz = model.mesh.normals.get(i * 3 + 2);
-        let normal = match (nx, ny, nz) {
-            (Some(nx), Some(ny), Some(nz)) => vec4(*nx, *ny, *nz, 0.0),
-            _ => panic!("nope2"),
-        };
-
-        let scale = 100.0;
-        vertices.push(Vertex {
-            position: vec3(x * scale, y * scale, z * scale),
-            uv,
-            color: [100, 0, 0, 0],
-            normal,
-        });
-        indices.push(i as u16);
-    }
-    
-    Mesh { vertices, indices, texture: texture.cloned()}
-}
-
-impl UDrawable for Food {
+impl Drawable for FoodFactory {
     fn get_repeat(&self) -> i32 {
-        1
+        2
     }
 
     fn get_position(&self) -> Vec3 {
-        self.position
+        vec3(0., 0., 0.)
     }
 
-    unsafe fn draw_at(&self, position: Vec3, _saturation: f32, models: Option<&Vec<Model>>, materials: Option<&Vec<Material>>, textures: Option<&HashMap<String, Texture2D>>) {
-        match &self.mesh {
-            Some(mesh) => {
-                let ctx = get_internal_gl();
-                // let texid = ctx.quad_context.new_texture_from_rgba8(mesh.texture.unwrap().width() as u16, mesh.texture.unwrap().height() as u16, &mesh.texture.unwrap().get_texture_data().bytes);
-
-                draw_cube(position, self.size, None, self.color);
-                // ctx.quad_gl.texture(mesh.texture.as_ref());
-                // draw_mesh(&mesh);
-            }
-            None => {
-                println!("nope");
-                draw_cube(position, self.size, None, self.color);
-            }
+    fn draw_at(&self, position: Vec3, _saturation: f32) {
+        for food in self.all_the_apples.iter() {
+            let food_translation = Mat4::from_translation(position + food.position);
+            let right = food.front.cross(food.up).normalize();
+            let food_rotation = Mat3::from_cols(right, food.front, food.up);
+            let scale = food.size * (food.quality as f32).powf(1. / 3.);
+            let food_matrix = Mat4::from_mat3(scale * food_rotation);
+            self.model
+                .draw_meshes(food_translation.mul_mat4(&food_matrix));
         }
     }
 }

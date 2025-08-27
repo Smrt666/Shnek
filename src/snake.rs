@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
@@ -64,7 +64,7 @@ impl Drawable for ShnekHead {
         self.position
     }
 
-    fn draw_at(&self, position: Vec3, _saturation: f32, _models: Option<&Vec<tobj::Model>>, _materials: Option<&Vec<tobj::Material>>, _textures: Option<&HashMap<String, Texture2D>>) {
+    fn draw_at(&self, position: Vec3, _saturation: f32) {
         draw_cube(position, vec3(5.0, 5.0, 5.0), None, GREEN);
     }
 }
@@ -99,7 +99,7 @@ impl Drawable for ShnekSegment {
         vec3(self.position.x, self.position.y, self.position.z)
     }
 
-    fn draw_at(&self, position: Vec3, _saturation: f32, _models: Option<&Vec<tobj::Model>>, _materials: Option<&Vec<tobj::Material>>, _textures: Option<&HashMap<String, Texture2D>>) {
+    fn draw_at(&self, position: Vec3, _saturation: f32) {
         draw_cube(position, vec3(4.0, 4.0, 4.0), None, BLUE);
     }
 }
@@ -227,15 +227,12 @@ impl Drawable for Shnek {
         )
     }
 
-    fn draw_at(&self, position: Vec3, saturation: f32, models: Option<&Vec<tobj::Model>>, materials: Option<&Vec<tobj::Material>>, textures: Option<&HashMap<String, Texture2D>>) {
-        self.head.draw_at(position, saturation, None, None, None);
+    fn draw_at(&self, position: Vec3, saturation: f32) {
+        self.head.draw_at(position, saturation);
         for segment in &self.segments {
             segment.draw_at(
                 position + segment.get_position() - self.head.get_position(),
                 saturation,
-                models,
-                materials,
-                textures,
             );
         }
     }
