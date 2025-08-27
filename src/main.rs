@@ -90,7 +90,7 @@ async fn main() {
 
         unsafe {
             food_factory.draw_food();
-            test_obj.draw();
+            test_obj.draw_meshes();
         }
         player.draw(None, None, None);
 

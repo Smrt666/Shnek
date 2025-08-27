@@ -20,7 +20,6 @@ impl Model3D {
         let material_path = Path::new(path).parent().unwrap();
         let mut meshes = Vec::new();
         for model in models.iter() {
-            println!("Loading model: {:?}", model);
             let material = &materials[model.mesh.material_id.expect("no material id")];
             meshes.push(obj_to_mesh(model, load_diffuse(material_path, material)))
         }
@@ -28,7 +27,7 @@ impl Model3D {
         Model3D { meshes }
     }
 
-    pub fn draw(&self) {
+    pub fn draw_meshes(&self) {
         for mesh in self.meshes.iter() {
             draw_mesh(&mesh);
         }
@@ -72,7 +71,8 @@ pub fn obj_to_mesh(model: &tobj::Model, texture: Texture2D) -> Mesh {
         let scale = 20.0;
         // I think (not sure, but it looked like that) that color from texture is multiplied by color,
         // so set it to white to get the same color as in texture.
-        let mut vertex = Vertex::new(x * scale + 50., y * scale + 50., z * scale + 50., *u, *v, WHITE);
+        // Be careful: v coordinate is inverted.
+        let mut vertex = Vertex::new(x * scale + 50., y * scale + 50., z * scale + 50., *u, 1. - v, WHITE);
         vertex.normal = normal;
         vertices.push(vertex);
     }
