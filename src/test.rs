@@ -1,9 +1,10 @@
 use std::env::current_dir;
 use image::{GenericImageView, ImageReader};
-use macroquad::color::RED;
+use macroquad::color::{RED, WHITE};
 use macroquad::miniquad::gl;
 use macroquad::models::{draw_cube, draw_mesh, Mesh, Vertex};
 use macroquad::prelude::{get_internal_gl, vec2, vec3, vec4, Color, DrawMode, Texture2D, Vec3};
+use macroquad::prelude::FilterMode::Nearest;
 use tobj::{Material, Model};
 
 pub struct TestObject {
@@ -24,9 +25,10 @@ impl TestObject {
         let bytes = image.to_rgba8();
         let texture = Texture2D::from_rgba8(width as u16, height as u16, &bytes);
         Self {
-            position: Vec3::ZERO,
+            position: vec3(50.0, 50.0, 50.0),
+            // mesh: obj_to_mesh(&model),
             // mesh: tobj_model_to_mesh(model, texture),
-            mesh: make_cube(vec3(0.0, 0.0, 0.0), vec3(10.0, 10.0, 10.0), texture, RED)
+            mesh: make_cube(vec3(50.0, 50.0, 50.0), vec3(10.0, 10.0, 10.0), texture, WHITE)
         }
     }
 
@@ -158,48 +160,40 @@ unsafe fn make_cube(position: Vec3, size: Vec3, texture: Texture2D, color: Color
     vertices.push(Vertex::new2(tl_pos, tl_uv, color));
     indices.extend([20,21,22,20,22,23]);
 
+    texture.set_filter(Nearest);
     Mesh {
         vertices, indices, texture: Some(texture)
     }
 }
 fn tobj_model_to_mesh(model: Model, texture: Texture2D) -> Mesh {
     let mut vertices: Vec<Vertex> = Vec::new();
-    let mut indices: Vec<u16> = Vec::new();
+    // let max_index = *model.mesh.indices.iter().max().expect("No mesh indices found");
 
-    let texsize = vec2(texture.width() as f32, texture.height() as f32);
-
-    for i in model.mesh.indices.iter() {
-        let i = *i as usize;
+    for i in 0..model.mesh.positions.len() / 3 {
+        let i = i as usize;
         let x = model.mesh.positions[i * 3];
         let y = model.mesh.positions[i * 3 + 1];
         let z = model.mesh.positions[i * 3 + 2];
 
-        // Could not exist
-        let u = model.mesh.texcoords.get(i * 2).unwrap() * 1.0; // texsize.x;
-        let v = model.mesh.texcoords.get(i * 2 + 1).unwrap() * 1.0; // texsize.y;
-        let uv = vec2(u, v);
+        let u = model.mesh.texcoords.get(i * 2).unwrap();
+        let v = model.mesh.texcoords.get(i * 2 + 1).unwrap();
 
-        // Could not exist (normals are not used by default macroquad)
+        // Is allowed to not exist (normals are not used by default macroquad)
         let nx = model.mesh.normals.get(i * 3);
         let ny = model.mesh.normals.get(i * 3 + 1);
         let nz = model.mesh.normals.get(i * 3 + 2);
         let normal = match (nx, ny, nz) {
             (Some(nx), Some(ny), Some(nz)) => vec4(*nx, *ny, *nz, 0.0),
-            _ => panic!("nope2"),
+            _ => panic!("Missing normals in model"),
         };
 
-        let scale = 100.0;
-        vertices.push(Vertex {
-            position: vec3(x * scale, y * scale, z * scale),
-            uv,
-            color: [100, 0, 0, 0],
-            normal,
-        });
-        indices.push(i as u16);
+        let scale = 20.0;
+        vertices.push(Vertex::new(x * scale, y * scale, z * scale, *u, *v, WHITE));
     }
 
+    let indices = model.mesh.indices.iter().map(|i| *i as u16).collect::<Vec<u16>>();
     println!("Vertices: {:?}", vertices);
     println!("Indices: {:?}", indices);
-
-    Mesh { vertices, indices, texture: Some(texture)}
+    texture.set_filter(Nearest);
+    Mesh { vertices, indices, texture: Some(texture) }
 }

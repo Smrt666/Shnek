@@ -197,9 +197,9 @@ fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<Str
         let z = model.mesh.positions[i * 3 + 2];
 
         // Could not exist
-        let u = model.mesh.texcoords.get(i * 2).unwrap() * texsize.x;
-        let v = model.mesh.texcoords.get(i * 2 + 1).unwrap() * texsize.y;
-        let uv = vec2(u, v);
+        let u = model.mesh.texcoords.get(i * 2).unwrap();
+        let v = model.mesh.texcoords.get(i * 2 + 1).unwrap();
+        let uv = vec2(*u, *v);
 
         // Could not exist (normals are not used by default macroquad)
         let nx = model.mesh.normals.get(i * 3);
@@ -219,9 +219,6 @@ fn tobj_model_to_mesh(model: &Model, material: &Material, textures: &HashMap<Str
         });
         indices.push(i as u16);
     }
-
-    println!("Vertices: {:?}", vertices);
-    println!("Indices: {:?}", indices);
     
     Mesh { vertices, indices, texture: texture.cloned()}
 }
