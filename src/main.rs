@@ -11,6 +11,7 @@ mod food;
 mod movement;
 mod snake;
 mod test;
+mod models3d;
 
 #[derive(Debug, PartialEq)]
 enum GameState {
