@@ -4,13 +4,12 @@ use draw_utils::Drawable;
 use macroquad::{prelude::*, ui::root_ui, file};
 use tobj::load_obj;
 use image::ImageReader;
-use crate::test::TestObject;
+use crate::models3d::Model3D;
 
 mod draw_utils;
 mod food;
 mod movement;
 mod snake;
-mod test;
 mod models3d;
 
 #[derive(Debug, PartialEq)]
@@ -36,10 +35,7 @@ async fn main() {
     let texture = Texture2D::from_rgba8(abc.width() as u16, abc.height() as u16, &abc.to_rgba8());
     println!("Texture size: {:?}", texture.size());
 
-    let mut test_obj;
-    unsafe {
-        test_obj = TestObject::new(models[0].clone(), materials[0].clone());
-    }
+    let test_obj = Model3D::from_file("assets/head_test/snake_head.obj");
 
     let snake_start_len = 3;
     let mut player = snake::Shnek::new();

@@ -20,6 +20,7 @@ impl Model3D {
         let material_path = Path::new(path).parent().unwrap();
         let mut meshes = Vec::new();
         for model in models.iter() {
+            println!("Loading model: {:?}", model);
             let material = &materials[model.mesh.material_id.expect("no material id")];
             meshes.push(obj_to_mesh(model, load_diffuse(material_path, material)))
         }
@@ -50,7 +51,7 @@ pub fn obj_to_mesh(model: &tobj::Model, texture: Texture2D) -> Mesh {
     let mut vertices: Vec<Vertex> = Vec::new();
     let max_index = *model.mesh.indices.iter().max().expect("No mesh indices found");
 
-    for i in 0..max_index {
+    for i in 0..=max_index {
         let i = i as usize;
         let x = model.mesh.positions[i * 3];
         let y = model.mesh.positions[i * 3 + 1];
