@@ -8,7 +8,7 @@ use std::path::Path;
 use tobj::{load_obj, Material};
 
 pub struct Model3D {
-    meshes: Vec<Mesh>,
+    pub meshes: Vec<Mesh>,
 }
 
 impl Model3D {
