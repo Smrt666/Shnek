@@ -13,16 +13,28 @@ pub struct Model3D {
 
 impl Model3D {
     pub fn from_file(path: &str) -> Model3D {
-        let (models, materials) =
+        let (mut models, materials) =
             load_obj(path, &tobj::GPU_LOAD_OPTIONS).expect("failed to load model file");
         let materials = materials.expect("failed to load materials file");
         let material_path = Path::new(path).parent().unwrap();
-        let mut meshes = Vec::new();
-        for model in models.iter() {
-            let material = &materials[model.mesh.material_id.expect("no material id")];
-            meshes.push(obj_to_mesh(model, load_diffuse(material_path, material)))
-        }
 
+        let mut meshes = Vec::new();
+        // Merge meshes with the same texture into one, so fewer calls to GPU are required.
+        // Could backfire with large models, but we will not be using those anyway.
+        models.sort_by_key(|m| m.mesh.material_id.expect("no material id"));
+        for model in models.iter() {
+            let mat_id = model.mesh.material_id.unwrap();
+            let material = &materials[mat_id];
+            let mut mesh = obj_to_mesh(model, load_diffuse(material_path, material));
+            if meshes.len() <= mat_id {
+                meshes.push(mesh);
+            } else {
+                let start_index = meshes[mat_id].vertices.len() as u16;
+                mesh.indices.iter_mut().for_each(|idx| *idx += start_index);
+                meshes[mat_id].vertices.extend(mesh.vertices.iter());
+                meshes[mat_id].indices.extend(mesh.indices.iter());
+            }
+        }
         Model3D { meshes }
     }
 

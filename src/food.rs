@@ -125,7 +125,7 @@ impl Food {
 
 impl Drawable for FoodFactory {
     fn get_repeat(&self) -> i32 {
-        2
+        5
     }
 
     fn get_position(&self) -> Vec3 {
