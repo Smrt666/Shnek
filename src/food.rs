@@ -3,6 +3,9 @@ use crate::draw_utils::SPACE_SIZE;
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
+// use macroquad::audio::{load_sound, play_sound, play_sound_once};
+// use rand::seq::SliceRandom;
+// use rand::thread_rng;
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
@@ -16,7 +19,7 @@ pub fn random_vec3(min: f32, max: f32) -> Vec3 {
 pub struct Food {
     pub position: Vec3,
     pub size: Vec3,
-    pub quality: u32,
+    pub quality: i32,
     pub color: Color,
     pub repeat: i32,
 }
@@ -27,7 +30,7 @@ pub struct FoodFactory {
     pub all_the_apples: Vec<Food>,
     max_food: u32,
     // size_range: Vec<u32>,
-    // color_range: Vec<Color>,
+    color_range: Vec<Color>,
 }
 
 impl FoodFactory {
@@ -42,6 +45,7 @@ impl FoodFactory {
                 YELLOW,
             )],
             max_food: 1,
+            color_range: vec![YELLOW, PURPLE],
         }
     }
 
@@ -53,24 +57,63 @@ impl FoodFactory {
     //     self.max_food += 1;
     // }
 
-    pub fn check_food_collision(&mut self, snake: &mut Shnek) {
+    pub fn check_food_collision(&mut self, snake: &mut Shnek, score: usize) -> bool {
+        // println!("{:?}", self.all_the_apples);
+        // println!("{}", self.max_food);
+
         for &food in self.all_the_apples.clone().iter() {
             let dist = mod_distance(snake.get_position(), food.get_position());
             if dist < 3. {
-                for _ in 0..food.quality {
-                    snake.add_segment();
+                if food.quality > 0 {
+                    for _ in 0..food.quality {
+                        snake.add_segment();
+                    }
+                } else {
+                    for _ in 0..(-food.quality as u32) {
+                        snake.pop_segment();
+                        draw_rectangle(
+                            // draw a semi-transparent rectangle over the screen
+                            0.0,
+                            0.0,
+                            screen_width(),
+                            screen_height(),
+                            RED,
+                        );
+                    }
                 }
 
                 self.all_the_apples.retain(|&x| x != food);
                 if food.color != BROWN {
-                    for _ in 0..gen_range(1, self.max_food) {
-                        self.all_the_apples.push(Food::new_random(SPACE_SIZE, 2));
+                    let non_red = self
+                        .all_the_apples
+                        .iter()
+                        .filter(|apple| apple.color != RED)
+                        .count();
+                    for _ in 0..gen_range(1, self.max_food as usize + 1 - non_red) {
+                        if let Some(choice) = self.color_range.choose() {
+                            self.all_the_apples.push(Food::new_random(
+                                SPACE_SIZE,
+                                (((score + 1) as f64).log10()).round() as i32 + 1,
+                                *choice,
+                            ));
+                        }
                     }
-                }
 
-                // raise_max_food(food_factory);
+                    if score > 10 && gen_range(0, 100) < 5 {
+                        self.all_the_apples.push(Food::new_custom(
+                            random_vec3(0., SPACE_SIZE),
+                            random_vec3(3., 5.),
+                            (-(score as f64) / 10.).round() as i32,
+                            RED,
+                        ));
+                    }
+                    self.max_food = ((score as f64 * 2.).log10()).round() as u32 + 1;
+                }
+                return true;
             }
         }
+
+        false
     }
 
     pub fn draw_food(&self) {
@@ -90,7 +133,7 @@ impl FoodFactory {
 }
 
 impl Food {
-    pub fn new_custom(position: Vec3, size: Vec3, quality: u32, color: Color) -> Self {
+    pub fn new_custom(position: Vec3, size: Vec3, quality: i32, color: Color) -> Self {
         Self {
             position,
             size,
@@ -100,12 +143,12 @@ impl Food {
         }
     }
 
-    fn new_random(max_pos: f32, max_quality: u32) -> Self {
+    fn new_random(max_pos: f32, max_quality: i32, color: Color) -> Self {
         Self {
             position: random_vec3(0., max_pos),
             size: random_vec3(3., 5.),
             quality: gen_range(1, max_quality),
-            color: YELLOW,
+            color,
             repeat: 5,
         }
     }

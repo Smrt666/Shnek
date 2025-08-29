@@ -167,6 +167,10 @@ impl Shnek {
         self.segments.push(new_segment);
     }
 
+    pub fn pop_segment(&mut self) {
+        self.segments.pop();
+    }
+
     pub fn move_forward(&mut self, dt: f32) {
         // Segments are some time behind the head
         // If there is no suitable position, the oldest one is used
