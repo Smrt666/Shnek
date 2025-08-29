@@ -77,47 +77,44 @@ impl FoodFactory {
                             0.0,
                             screen_width(),
                             screen_height(),
-                            RED
+                            RED,
                         );
                     }
                 }
-                
 
                 self.all_the_apples.retain(|&x| x != food);
                 if food.color != BROWN {
-                    let non_red = self.all_the_apples.iter().filter(|apple| apple.color != RED).count();
-                    for _ in 0..gen_range(1, self.max_food as usize + 1 - non_red)
-                        {
+                    let non_red = self
+                        .all_the_apples
+                        .iter()
+                        .filter(|apple| apple.color != RED)
+                        .count();
+                    for _ in 0..gen_range(1, self.max_food as usize + 1 - non_red) {
                         if let Some(choice) = self.color_range.choose() {
-                            self.all_the_apples.push(
-                                Food::new_random(
+                            self.all_the_apples.push(Food::new_random(
                                 SPACE_SIZE,
                                 (((score + 1) as f64).log10()).round() as i32 + 1,
-                                *choice
-                                ),
-                            );
+                                *choice,
+                            ));
                         }
                     }
 
                     if score > 10 && gen_range(0, 100) < 5 {
-                        self.all_the_apples.push(
-                        Food::new_custom(
+                        self.all_the_apples.push(Food::new_custom(
                             random_vec3(0., SPACE_SIZE),
                             random_vec3(3., 5.),
-                            (-(score as f64)/10.).round() as i32,
-                            RED
-                        )
-                       );
+                            (-(score as f64) / 10.).round() as i32,
+                            RED,
+                        ));
                     }
-                    self.max_food = ((score as f64 *2.).log10()).round() as u32 + 1;
+                    self.max_food = ((score as f64 * 2.).log10()).round() as u32 + 1;
                 }
-            return true
+                return true;
             }
         }
 
-        return false
+        false
     }
-    
 
     pub fn draw_food(&self) {
         for food in self.all_the_apples.iter() {
@@ -151,7 +148,7 @@ impl Food {
             position: random_vec3(0., max_pos),
             size: random_vec3(3., 5.),
             quality: gen_range(1, max_quality),
-            color: color,
+            color,
             repeat: 5,
         }
     }

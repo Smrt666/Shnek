@@ -1,9 +1,9 @@
-use std::future;
-
-use macroquad::{audio::{set_sound_volume, Sound}, miniquad::window, prelude::*, ui::{hash, root_ui, Skin, Style}};
-use macroquad::audio::{load_sound, play_sound, play_sound_once, PlaySoundParams};
-
-
+use macroquad::audio::load_sound;
+use macroquad::{
+    audio::Sound,
+    prelude::*,
+    ui::{root_ui, Skin, Style},
+};
 
 pub struct MenuButtons {
     // window_background: Image,
@@ -17,17 +17,17 @@ pub struct MenuButtons {
     pub sound: Sound,
 }
 
-
 impl MenuButtons {
     pub fn new(ws: Style, bs: Style, ls: Style, sound: Sound) -> Self {
-        MenuButtons { 
-            // window_background: wb, 
-            // font: f, 
-            window_style: ws, 
+        MenuButtons {
+            // window_background: wb,
+            // font: f,
+            window_style: ws,
             button_style: bs,
-            label_style: ls, 
-            // ui_skin: skin, 
-            sound: sound }
+            label_style: ls,
+            // ui_skin: skin,
+            sound,
+        }
     }
 
     // pub fn get_sound(self) -> Sound {
@@ -37,64 +37,62 @@ impl MenuButtons {
 
 pub async fn load_window_background(path: &str) -> Image {
     // load_image("assets/Solid_black.png").await.unwrap();
-    load_image(&path).await.unwrap()
+    load_image(path).await.unwrap()
 }
 
 // pub async fn button_background() -> Image {
 //     load_image("assets/green_button.png").await.unwrap();
-// } 
+// }
 
 // pub async fn button_clicked_background() -> Image {
 //     load_image("assets/pressed_button.png").await.unwrap();
-// } 
+// }
 
 pub async fn load_font(font_path: &str) -> Vec<u8> {
     load_file(font_path).await.unwrap()
 }
 
-
 pub async fn load_window_style(window_background: Image) -> Style {
     root_ui()
-    .style_builder()
-    .background(window_background)
-    .background_margin(RectOffset::new(32.0, 76.0, 44.0, 20.0))
-    .margin(RectOffset::new(0.0, -40.0, 0.0, 0.0))
-    .build()
-}   
-
+        .style_builder()
+        .background(window_background)
+        .background_margin(RectOffset::new(32.0, 76.0, 44.0, 20.0))
+        .margin(RectOffset::new(0.0, -40.0, 0.0, 0.0))
+        .build()
+}
 
 pub async fn load_button_style(font: Vec<u8>) -> Style {
     root_ui()
-    .style_builder()
-    // .background(button_background)
-    // .background_clicked(button_clicked_background)
-    .background_margin(RectOffset::new(16.0, 16.0, 16.0, 16.0))
-    .margin(RectOffset::new(16.0, 0.0, -8.0, -8.0))
-    .font(&font)
-    .unwrap()
-    .text_color(BLACK)
-    .font_size(64)
-    .build()
-}   
+        .style_builder()
+        // .background(button_background)
+        // .background_clicked(button_clicked_background)
+        .background_margin(RectOffset::new(16.0, 16.0, 16.0, 16.0))
+        .margin(RectOffset::new(16.0, 0.0, -8.0, -8.0))
+        .font(&font)
+        .unwrap()
+        .text_color(BLACK)
+        .font_size(64)
+        .build()
+}
 
-pub async fn load_label_style(font: Vec<u8> ) -> Style {
+pub async fn load_label_style(font: Vec<u8>) -> Style {
     root_ui()
-    .style_builder()
-    .font(&font)
-    .unwrap()
-    .text_color(WHITE)
-    .font_size(28)
-    .build()
-}   
+        .style_builder()
+        .font(&font)
+        .unwrap()
+        .text_color(WHITE)
+        .font_size(28)
+        .build()
+}
 
 pub async fn load_ui_skin(window_style: Style, button_style: Style, label_style: Style) -> Skin {
     Skin {
-    window_style,
-    button_style,
-    label_style,
-    ..root_ui().default_skin()
+        window_style,
+        button_style,
+        label_style,
+        ..root_ui().default_skin()
     }
-} 
+}
 
 pub async fn loading_sound(sound_path: &str) -> Sound {
     load_sound(sound_path).await.unwrap()
