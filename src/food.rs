@@ -32,7 +32,7 @@ pub struct FoodFactory<'a> {
 
 impl<'a> FoodFactory<'a> {
     pub fn new(base_model: &'a Model3D) -> Self {
-        let model = MultiModel::new(base_model, &Mat4::IDENTITY, 1);
+        let model = MultiModel::new(base_model, 3);
         let mut s = Self {
             quality_range: (1, 1),
             all_the_apples: Vec::new(),
@@ -50,7 +50,7 @@ impl<'a> FoodFactory<'a> {
             position,
             up,
             front,
-            size * 0.1,
+            size,
             quality,
         );
         let food_translation = Mat4::from_translation(food.position);

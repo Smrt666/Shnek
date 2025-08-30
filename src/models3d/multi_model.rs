@@ -20,22 +20,13 @@ pub struct MultiModel<'a> {
 }
 
 impl<'a> MultiModel<'a> {
-    pub fn new(base_model: &'a Model3D, transform: &Mat4, repeat: i32) -> MultiModel<'a> {
-        let mut combined_model = Vec::new();
-        let mut textures = Vec::new();
-        for (i, mesh) in base_model.meshes.iter().enumerate() {
-            combined_model.push(Self::repeat_mesh(mesh, transform, repeat, i));
-            textures.push(mesh.texture.as_ref().unwrap());
-        }
+    pub fn new(base_model: &'a Model3D, repeat: i32) -> MultiModel<'a> {
+        let combined_model: Vec<PartialMesh> = Vec::new();
+        let textures = Vec::new();
         MultiModel { base_model, combined_model, textures, repeat }
     }
 
-    pub fn new2(base_model: &'a Model3D, origin: Vec3, repeat: i32) -> MultiModel<'a> {
-        let transform = Mat4::from_translation(origin);
-        MultiModel::new(base_model, &transform, repeat)
-    }
-
-    fn repeat_mesh(mesh: &Mesh, transform: &Mat4, repeat: i32, texture_id: usize) -> PartialMesh {
+    fn repeat_mesh(mesh: &Mesh, transform: &Mat4, repeat: i32, texture_id: usize) -> Vec<PartialMesh> {
         let base_vertices: Vec<Vertex> = mesh.vertices.iter().map(
             |v| Vertex {
                 position: transform.mul_vec4(Vec4::from((v.position, 1.0))).truncate(),
@@ -47,6 +38,7 @@ impl<'a> MultiModel<'a> {
         let mut vertices: Vec<Vertex> = Vec::new();
         let mut indices: Vec<u16> = Vec::new();
         let mut index_offset = 0;
+        let mut result = Vec::new();
         for i in -repeat..=repeat {
             for j in -repeat..=repeat {
                 for k in -repeat..=repeat {
@@ -55,6 +47,13 @@ impl<'a> MultiModel<'a> {
                         j as f32 * SPACE_SIZE,
                         k as f32 * SPACE_SIZE,
                     );
+                    // There is a limit to geometry call size
+                    if indices.len() + mesh.indices.len() > 5000 {
+                        result.push(PartialMesh { vertices, indices, texture_id});
+                        indices = Vec::new();
+                        vertices = Vec::new();
+                        index_offset = 0;
+                    }
                     for vertex in base_vertices.iter() {
                         let mut moved_vertex = vertex.clone();
                         moved_vertex.position += position;
@@ -63,16 +62,19 @@ impl<'a> MultiModel<'a> {
                     for index in mesh.indices.iter() {
                         indices.push(index + index_offset);
                     }
-                    index_offset += mesh.indices.len() as u16;
+                    index_offset += mesh.vertices.len() as u16;
                 }
             }
         }
-        PartialMesh { vertices, indices, texture_id}
+        if indices.len() > 0 {
+            result.push(PartialMesh { vertices, indices, texture_id});
+        }
+        result
     }
 
     pub fn add_transformed(&mut self, transform: &Mat4) {
          for (i, mesh) in self.base_model.meshes.iter().enumerate() {
-            self.combined_model.push(Self::repeat_mesh(mesh, transform, self.repeat, i));
+            self.combined_model.extend(Self::repeat_mesh(mesh, transform, self.repeat, i));
             self.textures.push(mesh.texture.as_ref().unwrap());
         }
     }
