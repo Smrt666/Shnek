@@ -12,6 +12,10 @@ struct PartialMesh {
     texture_id: usize,
 }
 
+/** The same models will be drawn multiple times at different
+positions. This struct combines meshes so less data has to be sent
+to GPU. This is used instead of instancing which is not supported by macroquad.
+*/
 pub struct MultiModel<'a> {
     base_model: &'a Model3D,
     combined_model: Vec<PartialMesh>,
