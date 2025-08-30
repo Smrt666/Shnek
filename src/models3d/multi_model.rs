@@ -22,7 +22,10 @@ pub struct MultiModel<'a> {
 impl<'a> MultiModel<'a> {
     pub fn new(base_model: &'a Model3D, repeat: i32) -> MultiModel<'a> {
         let combined_model: Vec<PartialMesh> = Vec::new();
-        let textures = Vec::new();
+        let mut textures = Vec::new();
+        for mesh in &base_model.meshes {
+            textures.push(mesh.texture.as_ref().unwrap());
+        }
         MultiModel { base_model, combined_model, textures, repeat }
     }
 
@@ -75,7 +78,6 @@ impl<'a> MultiModel<'a> {
     pub fn add_transformed(&mut self, transform: &Mat4) {
          for (i, mesh) in self.base_model.meshes.iter().enumerate() {
             self.combined_model.extend(Self::repeat_mesh(mesh, transform, self.repeat, i));
-            self.textures.push(mesh.texture.as_ref().unwrap());
         }
     }
 
@@ -85,8 +87,18 @@ impl<'a> MultiModel<'a> {
             gl = get_internal_gl().quad_gl;
         }
         gl.draw_mode(DrawMode::Triangles);
-        for mesh in self.combined_model.iter() {
-            gl.texture(Some(self.textures[mesh.texture_id]));  // This can be sometimes avoided texture_ids repeat
+        // Sort by texture, so we don't sent too many updates to GPU
+        let mut draw_order: Vec<usize> = (0..self.combined_model.len()).collect();
+        draw_order.sort_by_key(|&i| self.textures[self.combined_model[i].texture_id] as *const Texture2D as usize);
+        let mut prev_id: usize = 0;
+        for i in draw_order {
+            let mesh = self.combined_model.get(i).unwrap();
+            let texture = self.textures[mesh.texture_id];
+            let texture_ptr = texture as *const Texture2D as usize;
+            if prev_id != texture_ptr {
+                gl.texture(Some(texture));
+                prev_id = texture_ptr;
+            }
             gl.geometry(&mesh.vertices, &mesh.indices);
         }
     }
