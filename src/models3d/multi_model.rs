@@ -1,9 +1,9 @@
-use macroquad::math::{vec3, Vec3};
+use macroquad::math::{vec3, Mat4, Vec3, Vec4};
 use macroquad::models::{Mesh, Vertex};
-use macroquad::prelude::{get_internal_gl, DrawMode, Mat3};
+use macroquad::prelude::{get_internal_gl, DrawMode};
 use macroquad::texture::Texture2D;
 use crate::models3d::Model3D;
-use crate::draw_utils::{Drawable, SPACE_SIZE};
+use crate::draw_utils::SPACE_SIZE;
 
 
 struct PartialMesh {
@@ -13,23 +13,37 @@ struct PartialMesh {
 }
 
 pub struct MultiModel<'a> {
+    base_model: &'a Model3D,
     combined_model: Vec<PartialMesh>,
     textures: Vec<&'a Texture2D>,
-    origin: Vec3,
+    repeat: i32,
 }
 
 impl<'a> MultiModel<'a> {
-    pub fn new(base_model: &'a Model3D, origin: Vec3, repeat: i32) -> MultiModel<'a> {
+    pub fn new(base_model: &'a Model3D, transform: &Mat4, repeat: i32) -> MultiModel<'a> {
         let mut combined_model = Vec::new();
         let mut textures = Vec::new();
         for (i, mesh) in base_model.meshes.iter().enumerate() {
-            combined_model.push(Self::repeat_mesh(mesh, origin, repeat, i));
+            combined_model.push(Self::repeat_mesh(mesh, transform, repeat, i));
             textures.push(mesh.texture.as_ref().unwrap());
         }
-        MultiModel { origin, combined_model, textures }
+        MultiModel { base_model, combined_model, textures, repeat }
     }
 
-    fn repeat_mesh(mesh: &Mesh, origin: Vec3, repeat: i32, texture_id: usize) -> PartialMesh {
+    pub fn new2(base_model: &'a Model3D, origin: Vec3, repeat: i32) -> MultiModel<'a> {
+        let transform = Mat4::from_translation(origin);
+        MultiModel::new(base_model, &transform, repeat)
+    }
+
+    fn repeat_mesh(mesh: &Mesh, transform: &Mat4, repeat: i32, texture_id: usize) -> PartialMesh {
+        let base_vertices: Vec<Vertex> = mesh.vertices.iter().map(
+            |v| Vertex {
+                position: transform.mul_vec4(Vec4::from((v.position, 1.0))).truncate(),
+                uv: v.uv,
+                color: v.color,
+                normal: v.normal,
+            }
+        ).collect();
         let mut vertices: Vec<Vertex> = Vec::new();
         let mut indices: Vec<u16> = Vec::new();
         let mut index_offset = 0;
@@ -41,8 +55,7 @@ impl<'a> MultiModel<'a> {
                         j as f32 * SPACE_SIZE,
                         k as f32 * SPACE_SIZE,
                     );
-                    let position = position + origin;
-                    for vertex in mesh.vertices.iter() {
+                    for vertex in base_vertices.iter() {
                         let mut moved_vertex = vertex.clone();
                         moved_vertex.position += position;
                         vertices.push(moved_vertex);
@@ -57,30 +70,22 @@ impl<'a> MultiModel<'a> {
         PartialMesh { vertices, indices, texture_id}
     }
 
-    pub fn from_transformed(base_model: &'a Model3D, transform: Mat3, origin: Vec3, repeat: i32) -> MultiModel<'a> {
-        let mut multi_model = MultiModel::new(base_model, origin, repeat);
-        multi_model.combined_model.iter_mut().for_each(
-            |mesh|
-                mesh.vertices.iter_mut().for_each(
-                    |vertex| vertex.position = transform.mul_vec3(vertex.position)
-                )
-        );
-        multi_model
+    pub fn add_transformed(&mut self, transform: &Mat4) {
+         for (i, mesh) in self.base_model.meshes.iter().enumerate() {
+            self.combined_model.push(Self::repeat_mesh(mesh, transform, self.repeat, i));
+            self.textures.push(mesh.texture.as_ref().unwrap());
+        }
     }
-}
 
-impl<'a> Drawable for MultiModel<'a> {
-    fn get_repeat(&self) -> i32 { 0 }
-    fn get_position(&self) -> Vec3 { self.origin }
-    fn draw_at(&self, _position: Vec3, _saturation: f32) {
+    pub fn draw(&self) {
+        let gl;
         unsafe {
-            let gl = get_internal_gl().quad_gl;
-            gl.draw_mode(DrawMode::Triangles);
-            for mesh in self.combined_model.iter() {
-                gl.texture(Some(self.textures[mesh.texture_id]));
-                gl.geometry(&mesh.vertices, &mesh.indices);
-            }
+            gl = get_internal_gl().quad_gl;
+        }
+        gl.draw_mode(DrawMode::Triangles);
+        for mesh in self.combined_model.iter() {
+            gl.texture(Some(self.textures[mesh.texture_id]));  // This can be sometimes avoided texture_ids repeat
+            gl.geometry(&mesh.vertices, &mesh.indices);
         }
     }
 }
-

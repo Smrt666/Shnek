@@ -26,8 +26,8 @@ async fn main() {
     for _ in 0..snake_start_len {
         player.add_segment();
     }
-
-    let mut food_factory = food::FoodFactory::new();
+    let food_model = Model3D::from_file("assets/apfel/apfel.obj");
+    let mut food_factory = food::FoodFactory::new(&food_model);
 
     let mut view = movement::View::new();
 
