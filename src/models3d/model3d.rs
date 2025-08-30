@@ -61,7 +61,7 @@ pub fn load_diffuse(material_path: &Path, material: &Material) -> Texture2D {
         .expect("failed to load image file")
         .decode()
         .expect("failed to decode image");
-    
+
     Texture2D::from_rgba8(
         image.width() as u16,
         image.height() as u16,

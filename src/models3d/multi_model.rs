@@ -1,10 +1,9 @@
-use macroquad::math::{vec3, Mat4, Vec3, Vec4};
+use crate::draw_utils::SPACE_SIZE;
+use crate::models3d::Model3D;
+use macroquad::math::{vec3, Mat4, Vec4};
 use macroquad::models::{Mesh, Vertex};
 use macroquad::prelude::{get_internal_gl, DrawMode};
 use macroquad::texture::Texture2D;
-use crate::models3d::Model3D;
-use crate::draw_utils::SPACE_SIZE;
-
 
 struct PartialMesh {
     vertices: Vec<Vertex>,
@@ -30,18 +29,30 @@ impl<'a> MultiModel<'a> {
         for mesh in &base_model.meshes {
             textures.push(mesh.texture.as_ref().unwrap());
         }
-        MultiModel { base_model, combined_model, textures, repeat }
+        MultiModel {
+            base_model,
+            combined_model,
+            textures,
+            repeat,
+        }
     }
 
-    fn repeat_mesh(mesh: &Mesh, transform: &Mat4, repeat: i32, texture_id: usize) -> Vec<PartialMesh> {
-        let base_vertices: Vec<Vertex> = mesh.vertices.iter().map(
-            |v| Vertex {
+    fn repeat_mesh(
+        mesh: &Mesh,
+        transform: &Mat4,
+        repeat: i32,
+        texture_id: usize,
+    ) -> Vec<PartialMesh> {
+        let base_vertices: Vec<Vertex> = mesh
+            .vertices
+            .iter()
+            .map(|v| Vertex {
                 position: transform.mul_vec4(Vec4::from((v.position, 1.0))).truncate(),
                 uv: v.uv,
                 color: v.color,
                 normal: v.normal,
-            }
-        ).collect();
+            })
+            .collect();
         let mut vertices: Vec<Vertex> = Vec::new();
         let mut indices: Vec<u16> = Vec::new();
         let mut index_offset = 0;
@@ -56,13 +67,17 @@ impl<'a> MultiModel<'a> {
                     );
                     // There is a limit to geometry call size
                     if indices.len() + mesh.indices.len() > 5000 {
-                        result.push(PartialMesh { vertices, indices, texture_id});
+                        result.push(PartialMesh {
+                            vertices,
+                            indices,
+                            texture_id,
+                        });
                         indices = Vec::new();
                         vertices = Vec::new();
                         index_offset = 0;
                     }
                     for vertex in base_vertices.iter() {
-                        let mut moved_vertex = vertex.clone();
+                        let mut moved_vertex = *vertex;
                         moved_vertex.position += position;
                         vertices.push(moved_vertex);
                     }
@@ -73,15 +88,20 @@ impl<'a> MultiModel<'a> {
                 }
             }
         }
-        if indices.len() > 0 {
-            result.push(PartialMesh { vertices, indices, texture_id});
+        if !indices.is_empty() {
+            result.push(PartialMesh {
+                vertices,
+                indices,
+                texture_id,
+            });
         }
         result
     }
 
     pub fn add_transformed(&mut self, transform: &Mat4) {
-         for (i, mesh) in self.base_model.meshes.iter().enumerate() {
-            self.combined_model.extend(Self::repeat_mesh(mesh, transform, self.repeat, i));
+        for (i, mesh) in self.base_model.meshes.iter().enumerate() {
+            self.combined_model
+                .extend(Self::repeat_mesh(mesh, transform, self.repeat, i));
         }
     }
 
@@ -93,7 +113,9 @@ impl<'a> MultiModel<'a> {
         gl.draw_mode(DrawMode::Triangles);
         // Sort by texture, so we don't sent too many updates to GPU
         let mut draw_order: Vec<usize> = (0..self.combined_model.len()).collect();
-        draw_order.sort_by_key(|&i| self.textures[self.combined_model[i].texture_id] as *const Texture2D as usize);
+        draw_order.sort_by_key(|&i| {
+            self.textures[self.combined_model[i].texture_id] as *const Texture2D as usize
+        });
         let mut prev_id: usize = 0;
         for i in draw_order {
             let mesh = self.combined_model.get(i).unwrap();

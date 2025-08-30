@@ -46,19 +46,14 @@ impl<'a> FoodFactory<'a> {
     pub fn new_custom(&mut self, position: Vec3, size: f32, quality: u32) {
         let front = vec3(0., 1., 0.);
         let up = vec3(0., 0., 1.);
-        let food = Food::new_custom(
-            position,
-            up,
-            front,
-            size,
-            quality,
-        );
+        let food = Food::new_custom(position, up, front, size, quality);
         let food_translation = Mat4::from_translation(food.position);
         let right = food.front.cross(food.up).normalize();
         let food_rotation = Mat3::from_cols(right, food.front, food.up);
         let scale = food.size * (food.quality as f32).powf(1. / 3.);
         let food_matrix = Mat4::from_mat3(scale * food_rotation);
-        self.model.add_transformed(&food_translation.mul_mat4(&food_matrix));
+        self.model
+            .add_transformed(&food_translation.mul_mat4(&food_matrix));
         self.all_the_apples.push(food);
     }
 
@@ -124,7 +119,7 @@ impl Food {
     }
 }
 
-impl<'a> FoodFactory<'a> {
+impl FoodFactory<'_> {
     pub fn draw(&self) {
         self.model.draw();
     }
