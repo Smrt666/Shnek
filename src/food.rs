@@ -2,7 +2,6 @@ use crate::draw_utils::SPACE_SIZE;
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
-use std::vec;
 
 use crate::models3d::{Model3D, MultiModel};
 

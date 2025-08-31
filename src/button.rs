@@ -5,6 +5,7 @@ use macroquad::{
     ui::{root_ui, Skin, Style},
 };
 
+#[allow(dead_code)]
 pub struct MenuButtons {
     // window_background: Image,
     // button_background:,
@@ -17,6 +18,7 @@ pub struct MenuButtons {
     pub sound: Sound,
 }
 
+#[allow(dead_code)]
 impl MenuButtons {
     pub fn new(ws: Style, bs: Style, ls: Style, sound: Sound) -> Self {
         MenuButtons {
@@ -85,6 +87,7 @@ pub async fn load_label_style(font: Vec<u8>) -> Style {
         .build()
 }
 
+#[allow(dead_code)]
 pub async fn load_ui_skin(window_style: Style, button_style: Style, label_style: Style) -> Skin {
     Skin {
         window_style,
