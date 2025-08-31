@@ -1,5 +1,4 @@
 use crate::models3d::Model3D;
-use draw_utils::Drawable;
 use macroquad::{prelude::*, ui::root_ui};
 
 mod draw_utils;
@@ -17,12 +16,12 @@ enum GameState {
 
 #[macroquad::main("Shnek")]
 async fn main() {
-    let test_obj = Model3D::from_file("assets/head_test/snake_head.obj");
+    let head_model = Model3D::from_file("assets/head/snake_head.obj");
 
     let snake_start_len = 3;
-    let mut player = snake::Shnek::new();
+    let mut player = snake::Shnek::new(&head_model);
     player.set_position(0., 0., 0.);
-    player.set_direction(vec3(1., 0., 0.));
+    player.set_direction(vec3(1., 0., 0.), vec3(0., 0., 1.));
     for _ in 0..snake_start_len {
         player.add_segment();
     }
@@ -48,7 +47,7 @@ async fn main() {
             // Only update if not paused
             view.rotate(dt);
 
-            player.set_direction(view.forward());
+            player.set_direction(view.forward(), view.up());
             player.move_forward(dt);
 
             if player.check_tail_collision() {
@@ -65,7 +64,6 @@ async fn main() {
         // draw
 
         food_factory.draw();
-        test_obj.draw_meshes(Mat4::IDENTITY);
         player.draw();
 
         // Back to screen space, render some text
@@ -94,8 +92,6 @@ async fn main() {
                 game_state = GameState::Running;
             }
             if root_ui().button(0.5 * screen_size + vec2(0., 25.), "Reset") {
-                player.set_position(0., 0., 0.);
-                player.set_direction(vec3(1., 0., 0.));
                 player.reset();
                 view.reset();
                 for _ in 0..snake_start_len {

@@ -20,6 +20,8 @@ pub struct MultiModel<'a> {
     combined_model: Vec<PartialMesh>,
     textures: Vec<&'a Texture2D>,
     repeat: i32,
+    add_transforms: Vec<Mat4>,
+    group_transforms: Vec<Mat4>,
 }
 
 impl<'a> MultiModel<'a> {
@@ -34,6 +36,8 @@ impl<'a> MultiModel<'a> {
             combined_model,
             textures,
             repeat,
+            add_transforms: Vec::new(),
+            group_transforms: Vec::new(),
         }
     }
 
@@ -99,6 +103,7 @@ impl<'a> MultiModel<'a> {
     }
 
     pub fn add_transformed(&mut self, transform: &Mat4) {
+        self.add_transforms.push(transform.clone());
         for (i, mesh) in self.base_model.meshes.iter().enumerate() {
             self.combined_model
                 .extend(Self::repeat_mesh(mesh, transform, self.repeat, i));
@@ -111,6 +116,11 @@ impl<'a> MultiModel<'a> {
             gl = get_internal_gl().quad_gl;
         }
         gl.draw_mode(DrawMode::Triangles);
+
+        for transform in self.group_transforms.iter() {
+            gl.push_model_matrix(transform.clone());
+        }
+
         // Sort by texture, so we don't sent too many updates to GPU
         let mut draw_order: Vec<usize> = (0..self.combined_model.len()).collect();
         draw_order.sort_by_key(|&i| {
@@ -126,6 +136,27 @@ impl<'a> MultiModel<'a> {
                 prev_id = texture_ptr;
             }
             gl.geometry(&mesh.vertices, &mesh.indices);
+        }
+
+        for _transform in self.group_transforms.iter() {
+            gl.pop_model_matrix();
+        }
+    }
+
+    pub fn add_group_transform(&mut self, transform: Mat4) {
+        self.group_transforms.push(transform);
+    }
+
+    pub fn pop_group_transform(&mut self) -> Option<Mat4> {
+        self.group_transforms.pop()
+    }
+
+    pub fn base_transform(&mut self, transform: &Mat4) {
+        self.combined_model.clear();
+        let add_transforms = self.add_transforms.clone();
+        self.add_transforms.clear();
+        for add_transform in add_transforms.iter() {
+            self.add_transformed(&add_transform.mul_mat4(transform));
         }
     }
 }

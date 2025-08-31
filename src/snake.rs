@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use crate::draw_utils::{Drawable, SPACE_SIZE};
 use macroquad::prelude::*;
+use crate::models3d::{Model3D, MultiModel};
 
 /// A function to calculate the modulus of a float value with a given modulus.
 /// It ensures that the result is always non-negative.
@@ -21,20 +22,26 @@ pub fn modulus_vec3(value: Vec3, m: f32) -> Vec3 {
     )
 }
 
-pub struct ShnekHead {
+pub struct ShnekHead<'a> {
     position: Vec3,
     direction: Vec3,
+    up: Vec3,
+    model: MultiModel<'a>,
     /*
     Position is location within [0, SPACE_SIZE]^3
     Be careful, some things get weird when using modulus on floats.
      */
 }
 
-impl ShnekHead {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+impl<'a> ShnekHead<'a> {
+    pub fn new(x: f32, y: f32, z: f32, base_model: &'a Model3D) -> Self {
+        let mut model = MultiModel::new(base_model, 3);
+        model.add_transformed(&Mat4::IDENTITY);
         Self {
             position: vec3(x, y, z),
             direction: vec3(0.0, 0.0, 0.0),
+            up: vec3(0.0, 0.0, 1.0),
+            model,
         }
     }
 
@@ -46,26 +53,22 @@ impl ShnekHead {
         self.position = vec3(x, y, z);
     }
 
-    pub fn set_direction(&mut self, d: Vec3) {
+    pub fn set_direction(&mut self, d: Vec3, up: Vec3) {
         self.direction = d;
+        self.up = up;
     }
 
     pub fn get_direction(&self) -> Vec3 {
         self.direction
     }
-}
 
-impl Drawable for ShnekHead {
-    fn get_repeat(&self) -> i32 {
-        5
-    }
-
-    fn get_position(&self) -> Vec3 {
-        self.position
-    }
-
-    fn draw_at(&self, position: Vec3, _saturation: f32) {
-        draw_cube(position, vec3(5.0, 5.0, 5.0), None, GREEN);
+    pub fn draw(&mut self) {
+        let right = self.direction.cross(self.up).normalize();
+        let rotation = Mat3::from_cols(right, self.direction, self.up);
+        let transform = Mat4::from_translation(self.position)
+            .mul_mat4(&Mat4::from_mat3(rotation));
+        self.model.base_transform(&transform);
+        self.model.draw();
     }
 }
 
@@ -104,22 +107,22 @@ impl Drawable for ShnekSegment {
     }
 }
 
-pub struct Shnek {
+pub struct Shnek<'a> {
     segments: Vec<ShnekSegment>,
-    head: ShnekHead,
+    head: ShnekHead<'a>,
     // historical positions of the head, used to know where the segments should be
     head_positions: VecDeque<(Vec3, f32)>,
     speed: f32,
     time_moving: f32,
 }
 
-impl Shnek {
+impl<'a> Shnek<'a> {
     const SPACING: f32 = 5.0; // Approximate distance between segments
 
-    pub fn new() -> Self {
+    pub fn new(base_head_model: &'a Model3D) -> Self {
         Self {
             segments: Vec::new(),
-            head: ShnekHead::new(0.0, 0.0, 0.0),
+            head: ShnekHead::new(0.0, 0.0, 0.0, base_head_model),
             head_positions: VecDeque::new(),
             speed: 10.0,
             time_moving: 0.0,
@@ -130,7 +133,7 @@ impl Shnek {
         let new_segment = match self.segments.last() {
             Some(last_segment) => {
                 let before_last_pos = if self.segments.len() < 2 {
-                    self.head.get_position()
+                    self.get_position()
                 } else {
                     self.segments[self.segments.len() - 2].get_position()
                 };
@@ -139,7 +142,7 @@ impl Shnek {
                 ShnekSegment::new(new_pos.x, new_pos.y, new_pos.z)
             }
             None => {
-                let head_pos = self.head.get_position();
+                let head_pos = self.get_position();
                 let head_dir = self.head.get_direction();
                 let pos = head_pos - head_dir.normalize() * Shnek::SPACING;
 
@@ -157,7 +160,7 @@ impl Shnek {
 
         self.head.move_forward(dt * self.speed);
         self.head_positions
-            .push_back((self.head.get_position(), self.time_moving));
+            .push_back((self.get_position(), self.time_moving));
 
         let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
@@ -179,14 +182,20 @@ impl Shnek {
         self.time_moving = 0.0;
         self.segments.clear();
         self.head_positions.clear();
+        self.set_position(0., 0., 0.);
+        self.set_direction(vec3(1., 0., 0.), vec3(0., 0., 1.));
     }
 
-    pub fn set_direction(&mut self, d: Vec3) {
-        self.head.set_direction(d);
+    pub fn set_direction(&mut self, d: Vec3, up: Vec3) {
+        self.head.set_direction(d, up);
     }
 
     pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
         self.head.set_position(x, y, z);
+    }
+
+    pub fn get_position(&self) -> Vec3 {
+        self.head.position
     }
 
     pub fn get_length(&self) -> usize {
@@ -212,29 +221,10 @@ impl Shnek {
         }
         false // No collision
     }
-}
 
-impl Drawable for Shnek {
-    fn get_repeat(&self) -> i32 {
-        5
-    }
-
-    fn get_position(&self) -> Vec3 {
-        vec3(
-            modulus(self.head.get_position().x, SPACE_SIZE),
-            modulus(self.head.get_position().y, SPACE_SIZE),
-            modulus(self.head.get_position().z, SPACE_SIZE),
-        )
-    }
-
-    fn draw_at(&self, position: Vec3, saturation: f32) {
-        self.head.draw_at(position, saturation);
-        for segment in &self.segments {
-            segment.draw_at(
-                position + segment.get_position() - self.head.get_position(),
-                saturation,
-            );
-        }
+    pub fn draw(&mut self) {
+        self.head.draw();
+        // TODO: Draw body
     }
 }
 
