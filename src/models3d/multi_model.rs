@@ -1,10 +1,10 @@
-use std::collections::HashMap;
 use crate::draw_utils::SPACE_SIZE;
 use crate::models3d::Model3D;
 use macroquad::math::{vec3, Mat4, Vec4};
 use macroquad::models::{Mesh, Vertex};
 use macroquad::prelude::{get_internal_gl, DrawMode};
 use macroquad::texture::Texture2D;
+use std::collections::HashMap;
 
 struct PartialMesh {
     vertices: Vec<Vertex>,
@@ -41,7 +41,7 @@ impl<'a> MultiModel<'a> {
             add_transforms: HashMap::new(),
         }
     }
-    
+
     fn repeat_mesh(
         mesh: &Mesh,
         transform: &Mat4,
@@ -104,7 +104,7 @@ impl<'a> MultiModel<'a> {
     }
 
     pub fn add_transformed(&mut self, transform: &Mat4, id: usize) {
-        self.add_transforms.insert(id, transform.clone());
+        self.add_transforms.insert(id, *transform);
         for (i, mesh) in self.base_model.meshes.iter().enumerate() {
             self.combined_model
                 .extend(Self::repeat_mesh(mesh, transform, self.repeat, i));
@@ -112,7 +112,7 @@ impl<'a> MultiModel<'a> {
     }
 
     /** Lazy removal. Meshes are updated when base_transform is called.
-    */
+     */
     pub fn remove_transformed(&mut self, id: usize) {
         self.add_transforms.remove(&id);
     }
@@ -147,8 +147,12 @@ impl<'a> MultiModel<'a> {
         self.combined_model.clear();
         for (_, add_transform) in self.add_transforms.clone() {
             for (i, mesh) in self.base_model.meshes.iter().enumerate() {
-                self.combined_model
-                    .extend(Self::repeat_mesh(mesh, &add_transform.mul_mat4(&transform), self.repeat, i));
+                self.combined_model.extend(Self::repeat_mesh(
+                    mesh,
+                    &add_transform.mul_mat4(&transform),
+                    self.repeat,
+                    i,
+                ));
             }
         }
     }
@@ -157,4 +161,3 @@ impl<'a> MultiModel<'a> {
         self.base_transform(self.base_transform);
     }
 }
-

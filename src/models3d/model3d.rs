@@ -100,14 +100,7 @@ pub fn obj_to_mesh(model: &tobj::Model, texture: Texture2D) -> Mesh {
         // I think (not sure, but it looked like that) that color from texture is multiplied by color,
         // so set it to white to get the same color as in texture.
         // Be careful: v coordinate is inverted.
-        let mut vertex = Vertex::new(
-            x * scale,
-            y * scale,
-            z * scale,
-            *u,
-            1. - v,
-            WHITE,
-        );
+        let mut vertex = Vertex::new(x * scale, y * scale, z * scale, *u, 1. - v, WHITE);
         vertex.normal = normal;
         vertices.push(vertex);
     }

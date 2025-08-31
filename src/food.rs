@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::draw_utils::{Drawable, SPACE_SIZE};
+use crate::draw_utils::SPACE_SIZE;
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
@@ -104,7 +104,14 @@ impl<'a> FoodFactory<'a> {
 }
 
 impl Food {
-    fn new_custom(position: Vec3, up: Vec3, front: Vec3, size: f32, quality: u32, id: usize) -> Self {
+    fn new_custom(
+        position: Vec3,
+        up: Vec3,
+        front: Vec3,
+        size: f32,
+        quality: u32,
+        id: usize,
+    ) -> Self {
         Self {
             position,
             up,
@@ -135,7 +142,12 @@ impl FoodFactory<'_> {
                                 j as f32 * SPACE_SIZE,
                                 k as f32 * SPACE_SIZE,
                             );
-                            draw_cube(food.get_position() + position, vec3(15.0, 15.0, 15.0), None, Color::from_rgba(255, 0, 0, 100));
+                            draw_cube(
+                                food.get_position() + position,
+                                vec3(15.0, 15.0, 15.0),
+                                None,
+                                Color::from_rgba(255, 0, 0, 100),
+                            );
                         }
                     }
                 }

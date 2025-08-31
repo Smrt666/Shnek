@@ -1,9 +1,11 @@
 use macroquad::prelude::*;
-// use macroquad::rand::*;
 
 pub const SPACE_SIZE: f32 = 100.0;
 
-pub trait Drawable {
+/** This is here for development / debug purposes only.
+*/
+#[allow(dead_code)]
+pub trait _Drawable {
     /// Returns the number of times to repeat the object in each direction.
     fn get_repeat(&self) -> i32;
 
@@ -42,7 +44,7 @@ pub struct Cube {
     pub repeat: i32,
 }
 
-impl Drawable for Cube {
+impl _Drawable for Cube {
     fn get_repeat(&self) -> i32 {
         self.repeat
     }

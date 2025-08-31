@@ -1,6 +1,6 @@
+use crate::draw_utils::SPACE_SIZE;
 use crate::models3d::Model3D;
 use macroquad::{prelude::*, ui::root_ui};
-use crate::draw_utils::SPACE_SIZE;
 
 mod draw_utils;
 mod food;
@@ -79,7 +79,13 @@ async fn main() {
             30.0,
             BLACK,
         );
-        draw_text(&format!("food distance: {}", food_distance.round()), 10.0, 80.0, 30.0, BLACK);
+        draw_text(
+            &format!("food distance: {}", food_distance.round()),
+            10.0,
+            80.0,
+            30.0,
+            BLACK,
+        );
 
         // Pause menu
         if game_state == GameState::Paused || game_state == GameState::GameOver {

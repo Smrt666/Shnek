@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
-use crate::draw_utils::{Drawable, SPACE_SIZE};
-use macroquad::prelude::*;
+use crate::draw_utils::SPACE_SIZE;
 use crate::models3d::{Model3D, MultiModel};
+use macroquad::prelude::*;
 
 /// A function to calculate the modulus of a float value with a given modulus.
 /// It ensures that the result is always non-negative.
@@ -65,8 +65,7 @@ impl<'a> ShnekHead<'a> {
     pub fn draw(&mut self) {
         let right = self.direction.cross(self.up).normalize();
         let rotation = Mat3::from_cols(self.direction, self.up, right);
-        let transform = Mat4::from_translation(self.position)
-            .mul_mat4(&Mat4::from_mat3(rotation));
+        let transform = Mat4::from_translation(self.position).mul_mat4(&Mat4::from_mat3(rotation));
         self.model.base_transform(transform);
         self.model.draw();
     }
@@ -121,7 +120,7 @@ pub struct Shnek<'a> {
 
 impl<'a> Shnek<'a> {
     const SPACING: f32 = 10.0; // Approximate distance between segments
-    const HEAD_SPACE: f32 = 10.0;  // Distance between the head and the first segment
+    const HEAD_SPACE: f32 = 10.0; // Distance between the head and the first segment
 
     pub fn new(base_head_model: &'a Model3D, base_body_model: &'a Model3D) -> Self {
         Self {
@@ -165,17 +164,18 @@ impl<'a> Shnek<'a> {
         self.time_moving += dt;
 
         self.head.move_forward(dt * self.speed);
-        self.head_positions
-            .push_back(HeadSnapshot {
-                position: self.get_position(),
-                time: self.time_moving,
-                up: self.head.up,
-                direction: self.head.direction,
-            });
+        self.head_positions.push_back(HeadSnapshot {
+            position: self.get_position(),
+            time: self.time_moving,
+            up: self.head.up,
+            direction: self.head.direction,
+        });
 
         let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
-            let t = self.time_moving - i as f32 * (Shnek::SPACING / self.speed) - Shnek::HEAD_SPACE / self.speed;
+            let t = self.time_moving
+                - i as f32 * (Shnek::SPACING / self.speed)
+                - Shnek::HEAD_SPACE / self.speed;
             while j >= 0 && self.head_positions[j as usize].time > t {
                 j -= 1;
             }
@@ -233,9 +233,7 @@ impl<'a> Shnek<'a> {
         for (id, segment) in self.segments.iter().enumerate() {
             let translation = Mat4::from_translation(segment.get_position());
             let right = segment.forward.cross(segment.up).normalize();
-            let rotation = Mat4::from_mat3(Mat3::from_cols(
-                segment.forward, segment.up, right,
-            ));
+            let rotation = Mat4::from_mat3(Mat3::from_cols(segment.forward, segment.up, right));
             model.add_transformed(&translation.mul_mat4(&rotation), id);
         }
         model
@@ -243,7 +241,7 @@ impl<'a> Shnek<'a> {
 
     pub fn draw(&mut self) {
         self.head.draw();
-        self.create_body_model().draw();  // This could be cached in pause screen
+        self.create_body_model().draw(); // This could be cached in pause screen
     }
 }
 
