@@ -44,6 +44,14 @@ impl<'a> MultiModel<'a> {
         }
     }
 
+    pub fn from_transforms(base_model: &'a Model3D, transforms: &Vec<Mat4>, repeat: i32) -> MultiModel<'a> {
+        let mut model = MultiModel::new(base_model, repeat);
+        for (id, transform) in transforms.iter().enumerate() {
+            model.add_transformed(transform, id);
+        }
+        model
+    }
+
     fn repeat_mesh(
         mesh: &Mesh,
         transform: &Mat4,

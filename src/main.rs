@@ -18,9 +18,10 @@ enum GameState {
 #[macroquad::main("Shnek")]
 async fn main() {
     let head_model = Model3D::from_file("assets/head/snake_head.obj");
+    let body_model = Model3D::from_file("assets/body/snake_body.obj");
 
     let snake_start_len = 3;
-    let mut player = snake::Shnek::new(&head_model);
+    let mut player = snake::Shnek::new(&head_model, &body_model);
     player.set_position(0., 0., 0.);
     player.set_direction(vec3(1., 0., 0.), vec3(0., 0., 1.));
     for _ in 0..snake_start_len {
