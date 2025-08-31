@@ -64,7 +64,7 @@ impl<'a> ShnekHead<'a> {
 
     pub fn draw(&mut self) {
         let right = self.direction.cross(self.up).normalize();
-        let rotation = Mat3::from_cols(right, self.direction, self.up);
+        let rotation = Mat3::from_cols(self.direction, self.up, right);
         let transform = Mat4::from_translation(self.position)
             .mul_mat4(&Mat4::from_mat3(rotation));
         self.model.base_transform(&transform);

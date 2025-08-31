@@ -1,6 +1,6 @@
 use image::ImageReader;
 use macroquad::color::WHITE;
-use macroquad::math::{vec4, Mat4};
+use macroquad::math::{vec4, Mat4, Vec3};
 use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::prelude::get_internal_gl;
 use macroquad::texture::{FilterMode, Texture2D};
@@ -101,9 +101,9 @@ pub fn obj_to_mesh(model: &tobj::Model, texture: Texture2D) -> Mesh {
         // so set it to white to get the same color as in texture.
         // Be careful: v coordinate is inverted.
         let mut vertex = Vertex::new(
-            x * scale + 50.,
-            y * scale + 50.,
-            z * scale + 50.,
+            x * scale,
+            y * scale,
+            z * scale,
             *u,
             1. - v,
             WHITE,
