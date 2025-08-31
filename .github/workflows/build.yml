@@ -2,8 +2,8 @@ name: Rust publish
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
+    tags:
+      - "v*"
     branches: [ "main" ]
 
 env:
@@ -25,9 +25,8 @@ jobs:
         cd package && zip -r ../ubuntu-shnek.zip .
     - name: Upload release artifact
       uses: actions/upload-artifact@v4
-      if: github.ref_type == 'tag'
       with:
-        name: ubuntu-schnek
+        name: ubuntu-shnek
         path: package/ubuntu-shnek.zip
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
