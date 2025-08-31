@@ -153,10 +153,12 @@ impl<'a> MultiModel<'a> {
 
     pub fn base_transform(&mut self, transform: &Mat4) {
         self.combined_model.clear();
-        let add_transforms = self.add_transforms.clone();
-        self.add_transforms.clear();
-        for add_transform in add_transforms.iter() {
-            self.add_transformed(&add_transform.mul_mat4(transform));
+        for add_transform in self.add_transforms.clone() {
+            for (i, mesh) in self.base_model.meshes.iter().enumerate() {
+                self.combined_model
+                    .extend(Self::repeat_mesh(mesh, &add_transform.mul_mat4(transform), self.repeat, i));
+            }
         }
     }
 }
+
