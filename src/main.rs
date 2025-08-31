@@ -31,13 +31,10 @@ async fn main() {
     let head_model = Model3D::from_file("assets/head/snake_head.obj");
     let body_model = Model3D::from_file("assets/body/snake_body.obj");
 
-    let snake_start_len = 3;
-    let mut player = snake::Shnek::new(&head_model, &body_model);
+    let mut player = snake::Shnek::new(&head_model, &body_model, 3);
     player.set_position(0., 0., 0.);
     player.set_direction(vec3(1., 0., 0.), vec3(0., 0., 1.));
-    for _ in 0..snake_start_len {
-        player.add_segment();
-    }
+
     let food_model = Model3D::from_file("assets/apfel/apfel.obj");
     let mut food_factory = FoodFactory::new(&food_model);
 
@@ -109,7 +106,7 @@ async fn main() {
         }
 
         let dt = get_frame_time();
-        let score = player.get_length() - snake_start_len;
+        let score = player.get_score();
 
         if game_state == GameState::Running {
             // Only update if not paused
@@ -120,7 +117,7 @@ async fn main() {
 
             player.check_boost_and_move(dt);
 
-            if player.check_boost_time(&mut food_factory, snake_start_len) {
+            if player.check_boost_time(&mut food_factory, player.start_length) {
                 game_state = GameState::GameOver;
             }
 
@@ -174,6 +171,20 @@ async fn main() {
             &format!("food distance: {}", food_distance.round()),
             10.0,
             100.0,
+            30.0,
+            BLACK,
+        );
+        draw_text(
+            &format!("food count: {}", food_factory.food_count()),
+            10.0,
+            130.0,
+            30.0,
+            BLACK,
+        );
+        draw_text(
+            &format!("max food: {}", food_factory.max_food),
+            10.0,
+            150.0,
             30.0,
             BLACK,
         );
@@ -232,7 +243,7 @@ async fn main() {
                     view.reset();
                     food_factory = FoodFactory::new(&food_model);
                     score_file.reset();
-                    for _ in 0..snake_start_len {
+                    for _ in 0..player.start_length {
                         player.add_segment();
                     }
                     game_state = GameState::Running;
@@ -270,7 +281,7 @@ async fn main() {
             });
             root_ui().move_window(menu_id, window_pos);
 
-            score_file.write(high_score);
+            score_file.write(high_score as usize);
 
             draw_rectangle(0.0, 0.0, screen_width(), screen_height(), BLACK);
 

@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::food::{Food, FoodFactory};
+use crate::food::{FoodFactory, FoodVariant};
 use crate::draw_utils::SPACE_SIZE;
 use crate::models3d::{Model3D, MultiModel};
 use macroquad::prelude::*;
@@ -131,14 +131,15 @@ pub struct Shnek<'a> {
     speed: f32,
     time_moving: f32,
     time_boosted: f32,
+    pub start_length: usize,
 }
 
 impl<'a> Shnek<'a> {
     const SPACING: f32 = 10.0; // Approximate distance between segments
     const HEAD_SPACE: f32 = 10.0; // Distance between the head and the first segment
 
-    pub fn new(base_head_model: &'a Model3D, base_body_model: &'a Model3D) -> Self {
-        Self {
+    pub fn new(base_head_model: &'a Model3D, base_body_model: &'a Model3D, start_length: usize) -> Self {
+        let mut s = Self {
             segments: Vec::new(),
             base_body_model,
             head: ShnekHead::new(0.0, 0.0, 0.0, base_head_model),
@@ -146,7 +147,16 @@ impl<'a> Shnek<'a> {
             speed: 10.0,
             time_moving: 0.0,
             time_boosted: 0.0,
+            start_length,
+        };
+        for _ in 0..start_length {
+            s.add_segment();
         }
+        s
+    }
+
+    pub fn get_score(&self) -> i32 {
+        self.get_length() as i32 - self.start_length as i32
     }
 
     pub fn add_segment(&mut self) {
@@ -254,7 +264,7 @@ impl<'a> Shnek<'a> {
             self.segments.pop();
             self.time_boosted -= 3.;
             // poops out food and shrinks
-            food_factory.new_custom(self.segments.last().unwrap().get_position(), 3.0, 1);
+            food_factory.new_custom(self.segments.last().unwrap().get_position(), 3.0, 1, FoodVariant::Poop);
         } else if self.time_boosted > 3. {
             return true;
         }

@@ -15,19 +15,26 @@ pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     )
 }
 
+#[derive(PartialEq)]
+pub enum FoodVariant {
+    Normal,
+    Poop,
+}
+
 pub struct Food {
     pub position: Vec3,
     pub up: Vec3,
     pub front: Vec3,
     pub size: f32,
     pub quality: i32,
+    pub variant: FoodVariant,
     id: usize,
 }
 
 pub struct FoodFactory<'a> {
     quality_range: (i32, i32),
     all_the_apples: Vec<Food>,
-    max_food: u32,
+    pub max_food: u32,
     model: MultiModel<'a>,
     id_counter: usize,
 }
@@ -42,14 +49,14 @@ impl<'a> FoodFactory<'a> {
             model,
             id_counter: 0,
         };
-        s.new_custom(vec3(10., 10., 10.), 1., 1);
+        s.new_custom(vec3(10., 10., 10.), 1., 1, FoodVariant::Normal);
         s
     }
 
-    pub fn new_custom(&mut self, position: Vec3, size: f32, quality: i32) {
+    pub fn new_custom(&mut self, position: Vec3, size: f32, quality: i32, variant: FoodVariant) {
         let front = vec3(0., 1., 0.);
         let up = vec3(0., 0., 1.);
-        let food = Food::new_custom(position, up, front, size, quality, self.id_counter);
+        let food = Food::new_custom(position, up, front, size, quality, variant, self.id_counter);
         let food_translation = Mat4::from_translation(food.position);
         let right = food.front.cross(food.up).normalize();
         let food_rotation = Mat3::from_cols(right, food.front, food.up);
@@ -61,10 +68,10 @@ impl<'a> FoodFactory<'a> {
         self.all_the_apples.push(food);
     }
 
-    pub fn new_random(&mut self, max_pos: f32, max_quality: i32) {
+    pub fn new_random(&mut self, max_pos: f32) {
         let position = random_vec3(0., max_pos);
-        let quality = gen_range(1, max_quality);
-        self.new_custom(position, 1., quality);
+        let quality = gen_range(self.quality_range.0, self.quality_range.1);
+        self.new_custom(position, 1., quality, FoodVariant::Normal);
     }
 
     pub fn remove_food(&mut self, i: usize) {
@@ -73,88 +80,55 @@ impl<'a> FoodFactory<'a> {
         self.all_the_apples.remove(i);
     }
 
-    // pub fn check_food_collision(&mut self, snake: &mut Shnek, score: usize) -> bool {
-    //     for &food in self.all_the_apples.clone().iter() {
-    //         let dist = mod_distance(snake.get_position(), food.get_position());
-    //         if dist < 3. {
-    //             if food.quality > 0 {
-    //                 for _ in 0..food.quality {
-    //                     snake.add_segment();
-    //                 }
-    //             } else {
-    //                 for _ in 0..(-food.quality as u32) {
-    //                     snake.pop_segment();
-    //                     draw_rectangle(
-    //                         // draw a semi-transparent rectangle over the screen
-    //                         0.0,
-    //                         0.0,
-    //                         screen_width(),
-    //                         screen_height(),
-    //                         RED,
-    //                     );
-    //                 }
-    //             }
-    //
-    //             self.all_the_apples.retain(|&x| x != food);
-    //             if food.color != BROWN {
-    //                 let non_red = self
-    //                     .all_the_apples
-    //                     .iter()
-    //                     .filter(|apple| apple.color != RED)
-    //                     .count();
-    //                 for _ in 0..gen_range(1, self.max_food as usize + 1 - non_red) {
-    //                     if let Some(choice) = self.color_range.choose() {
-    //                         self.all_the_apples.push(Food::new_random(
-    //                             SPACE_SIZE,
-    //                             (((score + 1) as f64).log10()).round() as i32 + 1,
-    //                             *choice,
-    //                         ));
-    //                     }
-    //                 }
-    //
-    //                 if score > 10 && gen_range(0, 100) < 5 {
-    //                     self.all_the_apples.push(Food::new_custom(
-    //                         random_vec3(0., SPACE_SIZE),
-    //                         random_vec3(3., 5.),
-    //                         (-(score as f64) / 10.).round() as i32,
-    //                         RED,
-    //                     ));
-    //                 }
-    //                 self.max_food = ((score as f64 * 2.).log10()).round() as u32 + 1;
-    //             }
-    //             return true;
-    //         }
-    //     }
-    //
-    //     false
-    // }
+    pub fn food_count(&self) -> usize {
+        self.all_the_apples.len()
+    }
 
     pub fn check_food_collision(&mut self, snake: &mut Shnek) -> (f32, bool) {
-        let mut removed = vec![];
         let mut min_dist = SPACE_SIZE * 3.0;
         let mut eaten = false;
         for i in 0..self.all_the_apples.len() {
-            let dist = snake
-                .get_position()
-                .distance(self.all_the_apples[i].get_position());
+            let food = &self.all_the_apples[i];
+            let dist = mod_distance(snake.get_position(), food.get_position());
             if dist < min_dist {
                 min_dist = dist;
             }
+            // We are eating
             if dist < 10. {
                 eaten = true;
-                for _ in 0..self.all_the_apples[i].quality {
-                    snake.add_segment();
+                if food.quality > 0 {
+                    for _ in 0..food.quality {
+                        snake.add_segment();
+                    }
+                } else {
+                    for _ in 0..(-food.quality as u32) {
+                        snake.pop_segment();
+                        // draw a semi-transparent rectangle over the screen
+                        draw_rectangle(
+                            0.0,
+                            0.0,
+                            screen_width(),
+                            screen_height(),
+                            Color::from_rgba(255, 0, 0, 100),
+                        );
+                    }
                 }
-                removed.push(i);
-                // raise_max_food(food_factory);
-
-                for _ in 0..gen_range(1, self.max_food) {
-                    self.new_random(50., self.quality_range.1);
+                self.remove_food(i);
+                let score = snake.get_score();
+                // make new food and update food related stuff
+                let normal = self
+                    .all_the_apples
+                    .iter()
+                    .filter(|apple| apple.variant == FoodVariant::Normal)
+                    .count();
+                for _ in 0..gen_range(1, self.max_food as usize + 1 - normal) {
+                    if self.food_count() < self.max_food as usize {
+                        self.new_random(SPACE_SIZE);
+                    }
                 }
+                self.quality_range.1 = (((score + 1) as f64).log10()).round() as i32 + 1;
+                self.max_food = ((score as f64 * 2.).log10()).round() as u32 + 1;
             }
-        }
-        for i in removed {
-            self.remove_food(i)
         }
         (min_dist, eaten)
     }
@@ -167,6 +141,7 @@ impl Food {
         front: Vec3,
         size: f32,
         quality: i32,
+        variant: FoodVariant,
         id: usize,
     ) -> Self {
         Self {
@@ -176,6 +151,7 @@ impl Food {
             size,
             quality,
             id,
+            variant,
         }
     }
 
