@@ -255,16 +255,17 @@ impl<'a> Shnek<'a> {
             self.move_forward(dt * 2.);
             self.time_boosted += dt;
         } else {
+            self.time_boosted = 0.0;
             self.move_forward(dt);
         }
     }
 
     pub fn check_boost_time(&mut self, food_factory: &mut FoodFactory, start_len: usize) -> bool {
         if self.time_boosted > 3. && self.segments.len() > start_len {
-            self.segments.pop();
+            let segment = self.segments.pop().unwrap();
             self.time_boosted -= 3.;
             // poops out food and shrinks
-            food_factory.new_custom(self.segments.last().unwrap().get_position(), 3.0, 1, FoodVariant::Poop);
+            food_factory.new_custom(self.segments.last().unwrap().get_position(), 1.0, 1, FoodVariant::Poop, segment.up, segment.forward.cross(segment.up));
         } else if self.time_boosted > 3. {
             return true;
         }

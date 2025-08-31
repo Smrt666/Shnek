@@ -15,12 +15,13 @@ pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     )
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum FoodVariant {
     Normal,
     Poop,
 }
 
+#[derive(Copy, Clone)]
 pub struct Food {
     pub position: Vec3,
     pub up: Vec3,
@@ -36,34 +37,43 @@ pub struct FoodFactory<'a> {
     all_the_apples: Vec<Food>,
     pub max_food: u32,
     model: MultiModel<'a>,
+    poop_model: MultiModel<'a>,
     id_counter: usize,
 }
 
 impl<'a> FoodFactory<'a> {
-    pub fn new(base_model: &'a Model3D) -> Self {
+    pub fn new(base_model: &'a Model3D, base_poop_model: &'a Model3D) -> Self {
         let model = MultiModel::new(base_model, 3);
         let mut s = Self {
             quality_range: (1, 2),
             all_the_apples: Vec::new(),
             max_food: 1,
             model,
+            poop_model: MultiModel::new(base_poop_model, 3),
             id_counter: 0,
         };
-        s.new_custom(vec3(10., 10., 10.), 1., 1, FoodVariant::Normal);
+        let front = vec3(0., 1., 0.);
+        let up = vec3(0., 0., 1.);
+        s.new_custom(vec3(10., 10., 10.), 1., 1, FoodVariant::Normal, front, up);
         s
     }
 
-    pub fn new_custom(&mut self, position: Vec3, size: f32, quality: i32, variant: FoodVariant) {
-        let front = vec3(0., 1., 0.);
-        let up = vec3(0., 0., 1.);
+    pub fn new_custom(&mut self, position: Vec3, size: f32, quality: i32, variant: FoodVariant, front: Vec3, up: Vec3) {
         let food = Food::new_custom(position, up, front, size, quality, variant, self.id_counter);
         let food_translation = Mat4::from_translation(food.position);
         let right = food.front.cross(food.up).normalize();
         let food_rotation = Mat3::from_cols(right, food.front, food.up);
         let scale = food.size * (food.quality as f32).powf(1. / 3.);
-        let food_matrix = Mat4::from_mat3(scale * food_rotation);
-        self.model
-            .add_transformed(&food_translation.mul_mat4(&food_matrix), self.id_counter);
+        let food_matrix = food_translation.mul_mat4(&Mat4::from_mat3(scale * food_rotation));
+        match variant {
+            FoodVariant::Normal => {
+                self.model.add_transformed(&food_matrix, self.id_counter);
+            }
+            FoodVariant::Poop => {
+                self.poop_model.add_transformed(&food_matrix, self.id_counter);
+            }
+        }
+
         self.id_counter += 1;
         self.all_the_apples.push(food);
     }
@@ -71,11 +81,15 @@ impl<'a> FoodFactory<'a> {
     pub fn new_random(&mut self, max_pos: f32) {
         let position = random_vec3(0., max_pos);
         let quality = gen_range(self.quality_range.0, self.quality_range.1);
-        self.new_custom(position, 1., quality, FoodVariant::Normal);
+        let front = vec3(0., 1., 0.);
+        let up = vec3(0., 0., 1.);
+        self.new_custom(position, 1., quality, FoodVariant::Normal, front, up);
     }
 
     pub fn remove_food(&mut self, i: usize) {
         self.model.remove_transformed(self.all_the_apples[i].id);
+        self.poop_model.remove_transformed(self.all_the_apples[i].id);
+        self.poop_model.refresh_transformed();
         self.model.refresh_transformed();
         self.all_the_apples.remove(i);
     }
@@ -87,6 +101,7 @@ impl<'a> FoodFactory<'a> {
     pub fn check_food_collision(&mut self, snake: &mut Shnek) -> (f32, bool) {
         let mut min_dist = SPACE_SIZE * 3.0;
         let mut eaten = false;
+        let mut remove: Vec<usize> = Vec::new();
         for i in 0..self.all_the_apples.len() {
             let food = &self.all_the_apples[i];
             let dist = mod_distance(snake.get_position(), food.get_position());
@@ -113,7 +128,7 @@ impl<'a> FoodFactory<'a> {
                         );
                     }
                 }
-                self.remove_food(i);
+                remove.push(i);
                 let score = snake.get_score();
                 // make new food and update food related stuff
                 let normal = self
@@ -122,13 +137,16 @@ impl<'a> FoodFactory<'a> {
                     .filter(|apple| apple.variant == FoodVariant::Normal)
                     .count();
                 for _ in 0..gen_range(1, self.max_food as usize + 1 - normal) {
-                    if self.food_count() < self.max_food as usize {
+                    if self.food_count() - remove.len() < self.max_food as usize {
                         self.new_random(SPACE_SIZE);
                     }
                 }
                 self.quality_range.1 = (((score + 1) as f64).log10()).round() as i32 + 1;
                 self.max_food = ((score as f64 * 2.).log10()).round() as u32 + 1;
             }
+        }
+        for i in remove {
+            self.remove_food(i);
         }
         (min_dist, eaten)
     }
@@ -163,6 +181,7 @@ impl Food {
 impl FoodFactory<'_> {
     pub fn draw(&self) {
         self.model.draw();
+        self.poop_model.draw();
 
         if DEBUG {
             let repeat = 2;
