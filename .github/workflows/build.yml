@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  Build:
+  Build-Ubuntu:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -22,8 +22,24 @@ jobs:
         mkdir package
         cp target/release/shnek package/
         cp -r assets package/
-        cd package && zip -r ../ubuntu-shnek.zip .
+        cd package && zip -r ../shnek-ubuntu.zip .
     - name: Upload release artifact
       uses: softprops/action-gh-release@v2
       with:
-        files: ubuntu-shnek.zip
+        files: shnek-ubuntu.zip
+  Build-Windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --release
+    - name: Prepare release package
+      run: |
+        mkdir package
+        copy target\release\shnek.exe package\
+        xcopy assets package\assets\ /E /I /Y
+        powershell Compress-Archive -Path package\* -DestinationPath shnek-windows.zip
+    - name: Upload release artifact
+      uses: softprops/action-gh-release@v2
+      with:
+        files: shnek-windows.zip
