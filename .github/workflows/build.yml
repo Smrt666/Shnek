@@ -10,15 +10,24 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  Build:  # TODO
-    if: false
+  Build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - run: sudo apt-get -y install libasound2-dev
     - name: Build
       run: cargo build --release
+    - name: Prepare release package
+      run: |
+        mkdir package
+        cp target/release/shnek package/
+        cp -r assets package/
+        cd package && zip -r ../ubuntu-shnek.zip .
     - name: Upload release artifact
       uses: actions/upload-artifact@v4
+      if: github.ref_type == 'tag'
       with:
-        name: schnek
-        path: target/${{ matrix.BUILD_TARGET }}/schnek  # TODO
+        name: ubuntu-schnek
+        path: package/ubuntu-shnek.zip
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
