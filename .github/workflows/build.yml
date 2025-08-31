@@ -24,9 +24,6 @@ jobs:
         cp -r assets package/
         cd package && zip -r ../ubuntu-shnek.zip .
     - name: Upload release artifact
-      uses: actions/upload-artifact@v4
+      uses: softprops/action-gh-release@v2
       with:
-        name: ubuntu-shnek
-        path: ubuntu-shnek.zip
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        files: ubuntu-shnek.zip
