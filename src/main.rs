@@ -30,7 +30,7 @@ enum GameState {
     Score,
 }
 
-#[macroquad::main("Schnek")]
+#[macroquad::main("Shnek")]
 async fn main() {
     let head_model = Model3D::from_file("assets/head/snake_head.obj");
     let body_model = Model3D::from_file("assets/body/snake_body.obj");
