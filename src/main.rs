@@ -1,7 +1,11 @@
-use macroquad::{hash, prelude::*, ui::{root_ui, Skin}};
-use macroquad::audio::{play_sound, PlaySoundParams};
 use crate::draw_utils::SPACE_SIZE;
 use crate::models3d::Model3D;
+use macroquad::audio::{play_sound, PlaySoundParams};
+use macroquad::{
+    hash,
+    prelude::*,
+    ui::{root_ui, Skin},
+};
 
 use crate::button::{
     load_button_style, load_font, load_label_style, load_window_background, load_window_style,
@@ -46,7 +50,6 @@ async fn main() {
     let mut high_score = 0;
 
     let mut score_file = score::Score::new();
-
 
     let window_style =
         load_window_style(load_window_background("assets/Solid_black.png").await).await;

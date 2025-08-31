@@ -1,8 +1,8 @@
-use std::vec;
 use crate::draw_utils::SPACE_SIZE;
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
+use std::vec;
 
 use crate::models3d::{Model3D, MultiModel};
 
@@ -58,7 +58,15 @@ impl<'a> FoodFactory<'a> {
         s
     }
 
-    pub fn new_custom(&mut self, position: Vec3, size: f32, quality: i32, variant: FoodVariant, front: Vec3, up: Vec3) {
+    pub fn new_custom(
+        &mut self,
+        position: Vec3,
+        size: f32,
+        quality: i32,
+        variant: FoodVariant,
+        front: Vec3,
+        up: Vec3,
+    ) {
         let food = Food::new_custom(position, up, front, size, quality, variant, self.id_counter);
         let food_translation = Mat4::from_translation(food.position);
         let right = food.front.cross(food.up).normalize();
@@ -70,7 +78,8 @@ impl<'a> FoodFactory<'a> {
                 self.model.add_transformed(&food_matrix, self.id_counter);
             }
             FoodVariant::Poop => {
-                self.poop_model.add_transformed(&food_matrix, self.id_counter);
+                self.poop_model
+                    .add_transformed(&food_matrix, self.id_counter);
             }
         }
 
@@ -88,7 +97,8 @@ impl<'a> FoodFactory<'a> {
 
     pub fn remove_food(&mut self, i: usize) {
         self.model.remove_transformed(self.all_the_apples[i].id);
-        self.poop_model.remove_transformed(self.all_the_apples[i].id);
+        self.poop_model
+            .remove_transformed(self.all_the_apples[i].id);
         self.poop_model.refresh_transformed();
         self.model.refresh_transformed();
         self.all_the_apples.remove(i);
