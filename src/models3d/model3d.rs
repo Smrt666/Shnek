@@ -1,6 +1,6 @@
 use image::ImageReader;
 use macroquad::color::WHITE;
-use macroquad::math::{vec4, Mat4, Vec3};
+use macroquad::math::{vec4, Mat4};
 use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::prelude::get_internal_gl;
 use macroquad::texture::{FilterMode, Texture2D};
@@ -38,7 +38,7 @@ impl Model3D {
         Model3D { meshes }
     }
 
-    pub fn draw_meshes(&self, model_matrix: Mat4) {
+    pub fn _draw_meshes(&self, model_matrix: Mat4) {
         unsafe {
             let gl = get_internal_gl().quad_gl;
             gl.push_model_matrix(model_matrix);

@@ -68,10 +68,6 @@ impl<'a> FoodFactory<'a> {
         self.new_custom(position, 1., quality);
     }
 
-    pub fn raise_max_food(&mut self) {
-        self.max_food += 1;
-    }
-
     pub fn remove_food(&mut self, i: usize) {
         self.model.remove_transformed(self.all_the_apples[i].id);
         self.model.refresh_transformed();
@@ -117,10 +113,6 @@ impl Food {
             quality,
             id,
         }
-    }
-
-    fn get_quality(&self) -> u32 {
-        self.quality
     }
 
     fn get_position(&self) -> Vec3 {

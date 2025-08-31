@@ -23,7 +23,6 @@ pub struct MultiModel<'a> {
     textures: Vec<&'a Texture2D>,
     repeat: i32,
     add_transforms: HashMap<usize, Mat4>,
-    group_transforms: Vec<Mat4>,
 }
 
 impl<'a> MultiModel<'a> {
@@ -40,18 +39,9 @@ impl<'a> MultiModel<'a> {
             textures,
             repeat,
             add_transforms: HashMap::new(),
-            group_transforms: Vec::new(),
         }
     }
-
-    pub fn from_transforms(base_model: &'a Model3D, transforms: &Vec<Mat4>, repeat: i32) -> MultiModel<'a> {
-        let mut model = MultiModel::new(base_model, repeat);
-        for (id, transform) in transforms.iter().enumerate() {
-            model.add_transformed(transform, id);
-        }
-        model
-    }
-
+    
     fn repeat_mesh(
         mesh: &Mesh,
         transform: &Mat4,
@@ -134,10 +124,6 @@ impl<'a> MultiModel<'a> {
         }
         gl.draw_mode(DrawMode::Triangles);
 
-        for transform in self.group_transforms.iter() {
-            gl.push_model_matrix(transform.clone());
-        }
-
         // Sort by texture, so we don't sent too many updates to GPU
         let mut draw_order: Vec<usize> = (0..self.combined_model.len()).collect();
         draw_order.sort_by_key(|&i| {
@@ -154,18 +140,6 @@ impl<'a> MultiModel<'a> {
             }
             gl.geometry(&mesh.vertices, &mesh.indices);
         }
-
-        for _transform in self.group_transforms.iter() {
-            gl.pop_model_matrix();
-        }
-    }
-
-    pub fn add_group_transform(&mut self, transform: Mat4) {
-        self.group_transforms.push(transform);
-    }
-
-    pub fn pop_group_transform(&mut self) -> Option<Mat4> {
-        self.group_transforms.pop()
     }
 
     pub fn base_transform(&mut self, transform: Mat4) {

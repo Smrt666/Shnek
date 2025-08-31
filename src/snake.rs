@@ -121,6 +121,7 @@ pub struct Shnek<'a> {
 
 impl<'a> Shnek<'a> {
     const SPACING: f32 = 10.0; // Approximate distance between segments
+    const HEAD_SPACE: f32 = 10.0;  // Distance between the head and the first segment
 
     pub fn new(base_head_model: &'a Model3D, base_body_model: &'a Model3D) -> Self {
         Self {
@@ -149,7 +150,7 @@ impl<'a> Shnek<'a> {
             None => {
                 let head_pos = self.get_position();
                 let head_dir = self.head.get_direction();
-                let pos = head_pos - head_dir.normalize() * Shnek::SPACING;
+                let pos = head_pos - head_dir.normalize() * Shnek::HEAD_SPACE;
 
                 ShnekSegment::new(pos, head_dir, self.head.up)
             }
@@ -174,7 +175,7 @@ impl<'a> Shnek<'a> {
 
         let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
-            let t = self.time_moving - i as f32 * (Shnek::SPACING / self.speed);
+            let t = self.time_moving - i as f32 * (Shnek::SPACING / self.speed) - Shnek::HEAD_SPACE / self.speed;
             while j >= 0 && self.head_positions[j as usize].time > t {
                 j -= 1;
             }
