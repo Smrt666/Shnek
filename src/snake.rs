@@ -1,9 +1,8 @@
 use std::collections::VecDeque;
 
-use crate::{
-    draw_utils::{Drawable, SPACE_SIZE},
-    food::{Food, FoodFactory},
-};
+use crate::food::{Food, FoodFactory};
+use crate::draw_utils::SPACE_SIZE;
+use crate::models3d::{Model3D, MultiModel};
 use macroquad::prelude::*;
 
 /// A function to calculate the modulus of a float value with a given modulus.
@@ -37,20 +36,26 @@ pub fn mod_distance(v1: Vec3, v2: Vec3) -> f32 {
     (dx * dx + dy * dy + dz * dz).sqrt()
 }
 
-pub struct ShnekHead {
+pub struct ShnekHead<'a> {
     position: Vec3,
     direction: Vec3,
+    up: Vec3,
+    model: MultiModel<'a>,
     /*
     Position is location within [0, SPACE_SIZE]^3
     Be careful, some things get weird when using modulus on floats.
      */
 }
 
-impl ShnekHead {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+impl<'a> ShnekHead<'a> {
+    pub fn new(x: f32, y: f32, z: f32, base_model: &'a Model3D) -> Self {
+        let mut model = MultiModel::new(base_model, 3);
+        model.add_transformed(&Mat4::IDENTITY, 0);
         Self {
             position: vec3(x, y, z),
             direction: vec3(0.0, 0.0, 0.0),
+            up: vec3(0.0, 0.0, 1.0),
+            model,
         }
     }
 
@@ -62,81 +67,81 @@ impl ShnekHead {
         self.position = vec3(x, y, z);
     }
 
-    pub fn set_direction(&mut self, d: Vec3) {
+    pub fn set_direction(&mut self, d: Vec3, up: Vec3) {
         self.direction = d;
+        self.up = up;
     }
 
     pub fn get_direction(&self) -> Vec3 {
         self.direction
     }
-}
 
-impl Drawable for ShnekHead {
-    fn get_repeat(&self) -> i32 {
-        5
-    }
-
-    fn get_position(&self) -> Vec3 {
-        self.position
-    }
-
-    fn draw_at(&self, position: Vec3, _saturation: f32) {
-        draw_cube(position, vec3(5.0, 5.0, 5.0), None, GREEN);
+    pub fn draw(&mut self) {
+        let right = self.direction.cross(self.up).normalize();
+        let rotation = Mat3::from_cols(self.direction, self.up, right);
+        let transform = Mat4::from_translation(self.position).mul_mat4(&Mat4::from_mat3(rotation));
+        self.model.base_transform(transform);
+        self.model.draw();
     }
 }
 
 struct ShnekSegment {
     /// This is the position of the segment, position is not modulus-ed.
-    /// This struct might get deleted once the snake will be drawn as a nice
-    /// connected object.
     position: Vec3,
+    forward: Vec3,
+    up: Vec3,
 }
 impl ShnekSegment {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+    pub fn new(position: Vec3, forward: Vec3, up: Vec3) -> Self {
         Self {
-            position: vec3(x, y, z),
+            position,
+            forward,
+            up,
         }
     }
 
-    pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
-        self.position = vec3(x, y, z);
+    pub fn set_position(&mut self, position: Vec3) {
+        self.position = position;
+    }
+
+    pub fn set_direction(&mut self, direction: Vec3, up: Vec3) {
+        self.forward = direction;
+        self.up = up;
     }
 
     pub fn get_position(&self) -> Vec3 {
-        vec3(self.position.x, self.position.y, self.position.z)
-    }
-}
-impl Drawable for ShnekSegment {
-    fn get_repeat(&self) -> i32 {
-        5
-    }
-
-    fn get_position(&self) -> Vec3 {
-        vec3(self.position.x, self.position.y, self.position.z)
-    }
-
-    fn draw_at(&self, position: Vec3, _saturation: f32) {
-        draw_cube(position, vec3(4.0, 4.0, 4.0), None, BLUE);
+        self.position
     }
 }
 
-pub struct Shnek {
+#[derive(Copy, Clone, Debug)]
+struct HeadSnapshot {
+    position: Vec3,
+    direction: Vec3,
+    up: Vec3,
+    time: f32,
+}
+
+pub struct Shnek<'a> {
     segments: Vec<ShnekSegment>,
-    head: ShnekHead,
+    head: ShnekHead<'a>,
+    base_body_model: &'a Model3D,
     // historical positions of the head, used to know where the segments should be
-    head_positions: VecDeque<(Vec3, f32)>,
+    head_positions: VecDeque<HeadSnapshot>,
     speed: f32,
     time_moving: f32,
     time_boosted: f32,
 }
 
-impl Shnek {
-    const SPACING: f32 = 5.0; // Approximate distance between segments
+impl<'a> Shnek<'a> {
+    const SPACING: f32 = 10.0; // Approximate distance between segments
+    const HEAD_SPACE: f32 = 10.0; // Distance between the head and the first segment
 
-    pub fn new() -> Self {
+    pub fn new(base_head_model: &'a Model3D, base_body_model: &'a Model3D) -> Self {
         Self {
             segments: Vec::new(),
-            head: ShnekHead::new(0.0, 0.0, 0.0),
+            base_body_model,
+            head: ShnekHead::new(0.0, 0.0, 0.0, base_head_model),
             head_positions: VecDeque::new(),
             speed: 10.0,
             time_moving: 0.0,
@@ -148,20 +153,21 @@ impl Shnek {
         let new_segment = match self.segments.last() {
             Some(last_segment) => {
                 let before_last_pos = if self.segments.len() < 2 {
-                    self.head.get_position()
+                    self.get_position()
                 } else {
                     self.segments[self.segments.len() - 2].get_position()
                 };
                 let new_pos = last_segment.get_position()
                     + (last_segment.get_position() - before_last_pos).normalize() * Shnek::SPACING;
-                ShnekSegment::new(new_pos.x, new_pos.y, new_pos.z)
+                let forward = (last_segment.position - new_pos).normalize();
+                ShnekSegment::new(new_pos, forward, last_segment.up)
             }
             None => {
-                let head_pos = self.head.get_position();
+                let head_pos = self.get_position();
                 let head_dir = self.head.get_direction();
-                let pos = head_pos - head_dir.normalize() * Shnek::SPACING;
+                let pos = head_pos - head_dir.normalize() * Shnek::HEAD_SPACE;
 
-                ShnekSegment::new(pos.x, pos.y, pos.z)
+                ShnekSegment::new(pos, head_dir, self.head.up)
             }
         };
         self.segments.push(new_segment);
@@ -178,21 +184,29 @@ impl Shnek {
         self.time_moving += dt;
 
         self.head.move_forward(dt * self.speed);
-        self.head_positions
-            .push_back((self.head.get_position(), self.time_moving));
+        self.head_positions.push_back(HeadSnapshot {
+            position: self.get_position(),
+            time: self.time_moving,
+            up: self.head.up,
+            direction: self.head.direction,
+        });
 
         let mut j = (self.head_positions.len() - 1) as i32;
         for i in 0..self.segments.len() {
-            let t = self.time_moving - i as f32 * (Shnek::SPACING / self.speed);
-            while j >= 0 && self.head_positions[j as usize].1 > t {
+            let t = self.time_moving
+                - i as f32 * (Shnek::SPACING / self.speed)
+                - Shnek::HEAD_SPACE / self.speed;
+            while j >= 0 && self.head_positions[j as usize].time > t {
                 j -= 1;
             }
             if j >= 0 {
-                let (pos, _) = self.head_positions[j as usize];
-                self.segments[i].set_position(pos.x, pos.y, pos.z);
+                let head_snapshot = self.head_positions[j as usize];
+                self.segments[i].set_position(head_snapshot.position);
+                self.segments[i].set_direction(head_snapshot.direction, head_snapshot.up);
             } else {
-                let (pos, _) = self.head_positions[0];
-                self.segments[i].set_position(pos.x, pos.y, pos.z);
+                let head_snapshot = self.head_positions[0];
+                self.segments[i].set_position(head_snapshot.position);
+                self.segments[i].set_direction(head_snapshot.direction, head_snapshot.up);
             }
         }
     }
@@ -202,26 +216,29 @@ impl Shnek {
         self.time_boosted = 0.0;
         self.segments.clear();
         self.head_positions.clear();
+        self.set_position(0., 0., 0.);
+        self.set_direction(vec3(1., 0., 0.), vec3(0., 0., 1.));
     }
 
-    pub fn set_direction(&mut self, d: Vec3) {
-        self.head.set_direction(d);
+    pub fn set_direction(&mut self, d: Vec3, up: Vec3) {
+        self.head.set_direction(d, up);
     }
 
     pub fn set_position(&mut self, x: f32, y: f32, z: f32) {
         self.head.set_position(x, y, z);
     }
 
+    pub fn get_position(&self) -> Vec3 {
+        self.head.position
+    }
+
+    pub fn get_camera_position(&self) -> Vec3 {
+        self.head.position + self.head.up * 2.0
+    }
+
     pub fn get_length(&self) -> usize {
         self.segments.len()
     }
-
-    // pub fn get_speed(&self) -> f32 {
-    //     self.speed
-    // }
-    // pub fn set_speed(&mut self, speed: f32) {
-    //     self.speed = speed;
-    // }
 
     pub fn check_boost_and_move(&mut self, dt: f32) {
         if is_key_down(KeyCode::LeftShift) {
@@ -236,12 +253,8 @@ impl Shnek {
         if self.time_boosted > 3. && self.segments.len() > start_len {
             self.segments.pop();
             self.time_boosted -= 3.;
-            food_factory.all_the_apples.push(Food::new_custom(
-                self.segments.last().unwrap().get_position(),
-                vec3(3., 3., 3.),
-                1,
-                BROWN,
-            )); // poops out food and shrinks
+            // poops out food and shrinks
+            food_factory.new_custom(self.segments.last().unwrap().get_position(), 3.0, 1);
         } else if self.time_boosted > 3. {
             return true;
         }
@@ -260,25 +273,21 @@ impl Shnek {
         }
         false // No collision
     }
-}
 
-impl Drawable for Shnek {
-    fn get_repeat(&self) -> i32 {
-        5
-    }
-
-    fn get_position(&self) -> Vec3 {
-        modulus_vec3(self.head.get_position(), SPACE_SIZE)
-    }
-
-    fn draw_at(&self, position: Vec3, saturation: f32) {
-        self.head.draw_at(position, saturation);
-        for segment in &self.segments {
-            segment.draw_at(
-                position + segment.get_position() - self.head.get_position(),
-                saturation,
-            );
+    fn create_body_model(&mut self) -> MultiModel<'a> {
+        let mut model = MultiModel::new(self.base_body_model, 3);
+        for (id, segment) in self.segments.iter().enumerate() {
+            let translation = Mat4::from_translation(segment.get_position());
+            let right = segment.forward.cross(segment.up).normalize();
+            let rotation = Mat4::from_mat3(Mat3::from_cols(segment.forward, segment.up, right));
+            model.add_transformed(&translation.mul_mat4(&rotation), id);
         }
+        model
+    }
+
+    pub fn draw(&mut self) {
+        self.head.draw();
+        self.create_body_model().draw(); // This could be cached in pause screen
     }
 }
 

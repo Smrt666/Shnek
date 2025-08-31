@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 macroquad = { version = "0.4.14", features = ["audio"] }
-winit = "0.30.9"
+image = {version = "0.25.6", features = ["jpeg"]}
+tobj = "4.0.3"
 
 [profile.dev]
 opt-level = 3

@@ -1,0 +1,3 @@
+2025-08-31 17:25:33,549 [    749]   WARN - c.i.o.u.r.overrides - Conflicting registry key definition for key clion.wsl.sleep.timeout: it was defined by plugin com.intellij.nativeDebug but redefined by plugin com.jetbrains.rust. Consider adding overrides="true" for one of the plugins, see the documentation for com.intellij.openapi.util.registry.RegistryKeyBean.overrides for more details.
+2025-08-31 17:25:37,816 [   5016]   WARN - #c.i.o.v.n.p.PersistentFSImpl - Can't find root[#90413] in persistence
+2025-08-31 17:25:39,377 [   6577]   WARN - #c.i.s.c.i.StationSocketConnectionLoop - Discovery connection failed with NoSuchFileException (/run/user/1000/jb.station.sock)
