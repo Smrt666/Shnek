@@ -211,6 +211,10 @@ impl<'a> Shnek<'a> {
         self.head.position
     }
 
+    pub fn get_camera_position(&self) -> Vec3 {
+        self.head.position + self.head.up * 2.0
+    }
+
     pub fn get_length(&self) -> usize {
         self.segments.len()
     }

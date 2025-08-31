@@ -61,7 +61,7 @@ async fn main() {
         }
 
         // Set the camera to follow the player
-        view.set_camera(player.get_position());
+        view.set_camera(player.get_camera_position());
 
         clear_background(DARKGRAY);
         // draw
