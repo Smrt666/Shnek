@@ -37,6 +37,7 @@ pub trait _Drawable {
     }
 }
 
+#[allow(dead_code)]
 pub struct Cube {
     pub position: Vec3,
     pub size: Vec3,
