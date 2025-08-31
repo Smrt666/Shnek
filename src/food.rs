@@ -1,12 +1,13 @@
 use std::vec;
 
-use crate::draw_utils::Drawable;
+use crate::draw_utils::{Drawable, SPACE_SIZE};
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
 
 use crate::models3d::{Model3D, MultiModel};
 
+const DEBUG: bool = false;
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
         gen_range(min, max),
@@ -21,6 +22,7 @@ pub struct Food {
     pub front: Vec3,
     pub size: f32,
     pub quality: u32,
+    id: usize,
 }
 
 pub struct FoodFactory<'a> {
@@ -28,16 +30,18 @@ pub struct FoodFactory<'a> {
     all_the_apples: Vec<Food>,
     max_food: u32,
     model: MultiModel<'a>,
+    id_counter: usize,
 }
 
 impl<'a> FoodFactory<'a> {
     pub fn new(base_model: &'a Model3D) -> Self {
         let model = MultiModel::new(base_model, 3);
         let mut s = Self {
-            quality_range: (1, 1),
+            quality_range: (1, 2),
             all_the_apples: Vec::new(),
             max_food: 1,
             model,
+            id_counter: 0,
         };
         s.new_custom(vec3(10., 10., 10.), 1., 1);
         s
@@ -46,29 +50,45 @@ impl<'a> FoodFactory<'a> {
     pub fn new_custom(&mut self, position: Vec3, size: f32, quality: u32) {
         let front = vec3(0., 1., 0.);
         let up = vec3(0., 0., 1.);
-        let food = Food::new_custom(position, up, front, size, quality);
+        let food = Food::new_custom(position, up, front, size, quality, self.id_counter);
         let food_translation = Mat4::from_translation(food.position);
         let right = food.front.cross(food.up).normalize();
         let food_rotation = Mat3::from_cols(right, food.front, food.up);
         let scale = food.size * (food.quality as f32).powf(1. / 3.);
         let food_matrix = Mat4::from_mat3(scale * food_rotation);
         self.model
-            .add_transformed(&food_translation.mul_mat4(&food_matrix));
+            .add_transformed(&food_translation.mul_mat4(&food_matrix), self.id_counter);
+        self.id_counter += 1;
         self.all_the_apples.push(food);
+    }
+
+    pub fn new_random(&mut self, max_pos: f32, max_quality: u32) {
+        let position = random_vec3(0., max_pos);
+        let quality = gen_range(1, max_quality);
+        self.new_custom(position, 1., quality);
     }
 
     pub fn raise_max_food(&mut self) {
         self.max_food += 1;
     }
 
-    pub fn check_food_collision(&mut self, snake: &mut Shnek) {
+    pub fn remove_food(&mut self, i: usize) {
+        self.model.remove_transformed(self.all_the_apples[i].id);
+        self.model.refresh_transformed();
+        self.all_the_apples.remove(i);
+    }
+
+    pub fn check_food_collision(&mut self, snake: &mut Shnek) -> f32 {
         let mut removed = vec![];
-        let mut new_food = vec![];
+        let mut min_dist = SPACE_SIZE * 3.0;
         for i in 0..self.all_the_apples.len() {
             let dist = snake
                 .get_position()
                 .distance(self.all_the_apples[i].get_position());
-            if dist < 3. {
+            if dist < min_dist {
+                min_dist = dist;
+            }
+            if dist < 10. {
                 for _ in 0..self.all_the_apples[i].quality {
                     snake.add_segment();
                 }
@@ -76,37 +96,26 @@ impl<'a> FoodFactory<'a> {
                 // raise_max_food(food_factory);
 
                 for _ in 0..gen_range(1, self.max_food) {
-                    new_food.push(Food::new_random(50., 2));
+                    self.new_random(50., self.quality_range.1);
                 }
             }
         }
         for i in removed {
-            self.all_the_apples.remove(i);
+            self.remove_food(i)
         }
-        for food in new_food {
-            self.all_the_apples.push(food);
-        }
+        min_dist
     }
 }
 
 impl Food {
-    fn new_custom(position: Vec3, up: Vec3, front: Vec3, size: f32, quality: u32) -> Self {
+    fn new_custom(position: Vec3, up: Vec3, front: Vec3, size: f32, quality: u32, id: usize) -> Self {
         Self {
             position,
             up,
             front,
             size,
             quality,
-        }
-    }
-
-    fn new_random(max_pos: f32, max_quality: u32) -> Self {
-        Self {
-            position: random_vec3(0., max_pos),
-            up: vec3(0., 0., 1.),
-            front: vec3(0., 1., 0.),
-            quality: gen_range(1, max_quality),
-            size: 0.1,
+            id,
         }
     }
 
@@ -122,5 +131,23 @@ impl Food {
 impl FoodFactory<'_> {
     pub fn draw(&self) {
         self.model.draw();
+
+        if DEBUG {
+            let repeat = 2;
+            for food in self.all_the_apples.iter() {
+                for i in -repeat..=repeat {
+                    for j in -repeat..=repeat {
+                        for k in -repeat..=repeat {
+                            let position = vec3(
+                                i as f32 * SPACE_SIZE,
+                                j as f32 * SPACE_SIZE,
+                                k as f32 * SPACE_SIZE,
+                            );
+                            draw_cube(food.get_position() + position, vec3(15.0, 15.0, 15.0), None, Color::from_rgba(255, 0, 0, 100));
+                        }
+                    }
+                }
+            }
+        }
     }
 }

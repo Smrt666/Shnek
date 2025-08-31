@@ -36,7 +36,7 @@ pub struct ShnekHead<'a> {
 impl<'a> ShnekHead<'a> {
     pub fn new(x: f32, y: f32, z: f32, base_model: &'a Model3D) -> Self {
         let mut model = MultiModel::new(base_model, 3);
-        model.add_transformed(&Mat4::IDENTITY);
+        model.add_transformed(&Mat4::IDENTITY, 0);
         Self {
             position: vec3(x, y, z),
             direction: vec3(0.0, 0.0, 0.0),
@@ -67,7 +67,7 @@ impl<'a> ShnekHead<'a> {
         let rotation = Mat3::from_cols(self.direction, self.up, right);
         let transform = Mat4::from_translation(self.position)
             .mul_mat4(&Mat4::from_mat3(rotation));
-        self.model.base_transform(&transform);
+        self.model.base_transform(transform);
         self.model.draw();
     }
 }

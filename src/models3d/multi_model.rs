@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::draw_utils::SPACE_SIZE;
 use crate::models3d::Model3D;
 use macroquad::math::{vec3, Mat4, Vec4};
@@ -17,10 +18,11 @@ to GPU. This is used instead of instancing which is not supported by macroquad.
 */
 pub struct MultiModel<'a> {
     base_model: &'a Model3D,
+    base_transform: Mat4,
     combined_model: Vec<PartialMesh>,
     textures: Vec<&'a Texture2D>,
     repeat: i32,
-    add_transforms: Vec<Mat4>,
+    add_transforms: HashMap<usize, Mat4>,
     group_transforms: Vec<Mat4>,
 }
 
@@ -33,10 +35,11 @@ impl<'a> MultiModel<'a> {
         }
         MultiModel {
             base_model,
+            base_transform: Mat4::IDENTITY,
             combined_model,
             textures,
             repeat,
-            add_transforms: Vec::new(),
+            add_transforms: HashMap::new(),
             group_transforms: Vec::new(),
         }
     }
@@ -102,12 +105,18 @@ impl<'a> MultiModel<'a> {
         result
     }
 
-    pub fn add_transformed(&mut self, transform: &Mat4) {
-        self.add_transforms.push(transform.clone());
+    pub fn add_transformed(&mut self, transform: &Mat4, id: usize) {
+        self.add_transforms.insert(id, transform.clone());
         for (i, mesh) in self.base_model.meshes.iter().enumerate() {
             self.combined_model
                 .extend(Self::repeat_mesh(mesh, transform, self.repeat, i));
         }
+    }
+
+    /** Lazy removal. Meshes are updated when base_transform is called.
+    */
+    pub fn remove_transformed(&mut self, id: usize) {
+        self.add_transforms.remove(&id);
     }
 
     pub fn draw(&self) {
@@ -151,14 +160,19 @@ impl<'a> MultiModel<'a> {
         self.group_transforms.pop()
     }
 
-    pub fn base_transform(&mut self, transform: &Mat4) {
+    pub fn base_transform(&mut self, transform: Mat4) {
+        self.base_transform = transform;
         self.combined_model.clear();
-        for add_transform in self.add_transforms.clone() {
+        for (_, add_transform) in self.add_transforms.clone() {
             for (i, mesh) in self.base_model.meshes.iter().enumerate() {
                 self.combined_model
-                    .extend(Self::repeat_mesh(mesh, &add_transform.mul_mat4(transform), self.repeat, i));
+                    .extend(Self::repeat_mesh(mesh, &add_transform.mul_mat4(&transform), self.repeat, i));
             }
         }
+    }
+
+    pub fn refresh_transformed(&mut self) {
+        self.base_transform(self.base_transform);
     }
 }
 

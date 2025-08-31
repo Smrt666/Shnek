@@ -1,5 +1,6 @@
 use crate::models3d::Model3D;
 use macroquad::{prelude::*, ui::root_ui};
+use crate::draw_utils::SPACE_SIZE;
 
 mod draw_utils;
 mod food;
@@ -32,6 +33,7 @@ async fn main() {
 
     let mut game_state = GameState::Running;
 
+    let mut food_distance = SPACE_SIZE * 3.0;
     loop {
         if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
             game_state = match game_state {
@@ -54,7 +56,7 @@ async fn main() {
                 game_state = GameState::GameOver;
             }
 
-            food_factory.check_food_collision(&mut player);
+            food_distance = food_factory.check_food_collision(&mut player);
         }
 
         // Set the camera to follow the player
@@ -76,6 +78,7 @@ async fn main() {
             30.0,
             BLACK,
         );
+        draw_text(&format!("food distance: {}", food_distance.round()), 10.0, 80.0, 30.0, BLACK);
 
         // Pause menu
         if game_state == GameState::Paused || game_state == GameState::GameOver {
