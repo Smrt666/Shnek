@@ -348,19 +348,19 @@ mod tests {
     #[test]
     fn test_mod_vec3() {
         assert!(almost_eq(
-            modulus_vec3(vec3(101.3, 102.4, 103.6), SPACE_SIZE),
+            modulus_vec3(vec3(101.3, 102.4, 103.6), 100.0),
             vec3(1.3, 2.4, 3.6)
         ));
         assert!(almost_eq(
-            modulus_vec3(vec3(300.0, 500.44, 200.55), SPACE_SIZE),
+            modulus_vec3(vec3(300.0, 500.44, 200.55), 100.0),
             vec3(0.0, 0.44, 0.55)
         ));
         assert!(almost_eq(
-            modulus_vec3(vec3(-3., -0.0, -2.), SPACE_SIZE),
-            modulus_vec3(vec3(97., 100., 98.), SPACE_SIZE)
+            modulus_vec3(vec3(-3., -0.0, -2.), 100.0),
+            modulus_vec3(vec3(97., 100., 98.), 100.0)
         ));
         assert!(almost_eq(
-            modulus_vec3(vec3(-13., 3., 115.), SPACE_SIZE),
+            modulus_vec3(vec3(-13., 3., 115.), 100.0),
             vec3(87., 3., 15.)
         ));
     }
@@ -380,9 +380,9 @@ mod tests {
 
     #[test]
     fn test_mod_distance() {
-        assert!(mod_distance(vec3(10., 20., 30.), vec3(110., 120., 130.)) < 1e-3);
+        assert!(mod_distance(vec3(10., 20., 30.), vec3(70., 80., 90.)) < 1e-3);
         assert!(mod_distance(vec3(10.2, 33.22, 3.1), vec3(5.6, 20.0, 49.3)) - 48.273889 < 1e-3);
-        assert!(mod_distance(vec3(3.5, 88.6, 0.), vec3(198.3, 101.2, -130.)) - 32.951479 < 1e-3);
+        assert!(mod_distance(vec3(3.5, 48.6, 0.), vec3(118.3, 61.2, -90.)) - 32.951479 < 1e-3);
         assert!(
             mod_distance(
                 vec3(0.33333333, 0.44444444, 0.55555555),
@@ -392,8 +392,8 @@ mod tests {
         );
         assert!(
             mod_distance(
-                vec3(100000000., 100000000., 100000000.),
-                vec3(-200., -200., -200.)
+                vec3(60000000., 60000000., 60000000.),
+                vec3(-240., -240., -240.)
             ) < 1e-3
         );
     }
