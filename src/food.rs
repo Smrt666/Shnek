@@ -1,8 +1,8 @@
 use crate::draw_utils::SPACE_SIZE;
+use crate::models3d::{Model3D, MultiModel};
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
-use crate::models3d::{Model3D, MultiModel};
 
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
@@ -44,9 +44,13 @@ pub struct FoodFactory<'a> {
 
 impl<'a> FoodFactory<'a> {
     const FOOD_COLLISION_DISTANCE: f32 = 10.0;
-    const BAD_FOOD_LIFETIME: f32 = 30.0;  // seconds (or halved if boost moving)
+    const BAD_FOOD_LIFETIME: f32 = 30.0; // seconds (or halved if boost moving)
 
-    pub fn new(base_good_food_model: &'a Model3D, base_bad_food_model: &'a Model3D, base_poop_model: &'a Model3D) -> Self {
+    pub fn new(
+        base_good_food_model: &'a Model3D,
+        base_bad_food_model: &'a Model3D,
+        base_poop_model: &'a Model3D,
+    ) -> Self {
         let mut s = Self {
             quality_range: (1, 2),
             good_food: Vec::new(),
@@ -60,7 +64,15 @@ impl<'a> FoodFactory<'a> {
         };
         let front = vec3(0., 1., 0.);
         let up = vec3(0., 0., 1.);
-        s.new_custom(vec3(10., 10., 10.), 1., 1, FoodVariant::Normal, front, up, 0.0);
+        s.new_custom(
+            vec3(10., 10., 10.),
+            1.,
+            1,
+            FoodVariant::Normal,
+            front,
+            up,
+            0.0,
+        );
         s
     }
 
@@ -74,7 +86,15 @@ impl<'a> FoodFactory<'a> {
         up: Vec3,
         snake_time: f32,
     ) {
-        let food = Food::new_custom(position, up, front, size, quality, self.id_counter, snake_time);
+        let food = Food::new_custom(
+            position,
+            up,
+            front,
+            size,
+            quality,
+            self.id_counter,
+            snake_time,
+        );
         let food_translation = Mat4::from_translation(food.position);
         let right = food.front.cross(food.up).normalize();
         let food_rotation = Mat3::from_cols(right, food.front, food.up);
@@ -84,7 +104,8 @@ impl<'a> FoodFactory<'a> {
         // Update models
         match variant {
             FoodVariant::Normal => {
-                self.good_food_model.add_transformed(&food_matrix, self.id_counter);
+                self.good_food_model
+                    .add_transformed(&food_matrix, self.id_counter);
                 self.good_food.push(food);
             }
             FoodVariant::Poop => {
@@ -93,7 +114,8 @@ impl<'a> FoodFactory<'a> {
                 self.poop.push(food);
             }
             FoodVariant::Bad => {
-                self.bad_food_model.add_transformed(&food_matrix, self.id_counter);
+                self.bad_food_model
+                    .add_transformed(&food_matrix, self.id_counter);
                 self.bad_food.push(food);
             }
         }
@@ -108,7 +130,13 @@ impl<'a> FoodFactory<'a> {
         self.new_custom(position, 1., quality, food_variant, front, up, snake_time);
     }
 
-    pub fn new_random_with_quality(&mut self, max_pos: f32, food_variant: FoodVariant, quality: u32, snake_time: f32) {
+    pub fn new_random_with_quality(
+        &mut self,
+        max_pos: f32,
+        food_variant: FoodVariant,
+        quality: u32,
+        snake_time: f32,
+    ) {
         let position = random_vec3(0., max_pos);
         let front = vec3(0., 1., 0.);
         let up = vec3(0., 0., 1.);
@@ -118,7 +146,8 @@ impl<'a> FoodFactory<'a> {
     pub fn remove_food_model(&mut self, i: usize, variant: FoodVariant) {
         match variant {
             FoodVariant::Normal => {
-                self.good_food_model.remove_transformed(self.good_food[i].id);
+                self.good_food_model
+                    .remove_transformed(self.good_food[i].id);
                 self.good_food_model.refresh_transformed();
                 self.good_food.remove(i);
             }
@@ -142,7 +171,10 @@ impl<'a> FoodFactory<'a> {
     fn generate_food(&mut self, snake: &Shnek, remove_count: usize) {
         let score = snake.get_score();
         // make new good food
-        let max_new = gen_range(1, self.max_food as usize + 1 - self.food_count() + remove_count);
+        let max_new = gen_range(
+            1,
+            self.max_food as usize + 1 - self.food_count() + remove_count,
+        );
         for _ in 0..max_new {
             if self.food_count() < self.max_food as usize + remove_count {
                 self.new_random(SPACE_SIZE, FoodVariant::Normal, snake.time_moving);
@@ -150,7 +182,12 @@ impl<'a> FoodFactory<'a> {
         }
         // make new bad food 40 % of the time (when score > 5)
         if score > 5 && gen_range(0, 100) < 40 {
-            self.new_random_with_quality(SPACE_SIZE, FoodVariant::Bad, (score / 5).min(1) as u32, snake.time_moving);
+            self.new_random_with_quality(
+                SPACE_SIZE,
+                FoodVariant::Bad,
+                (score / 5).min(1) as u32,
+                snake.time_moving,
+            );
         }
     }
 
