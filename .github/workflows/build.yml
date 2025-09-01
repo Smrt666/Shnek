@@ -36,7 +36,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: cargo build --release
+      run: cargo build --release -Ctarget-feature=+crt-static
+      env:
+        RUSTFLAGS: "-C target-feature=+crt-static"
     - name: Prepare release package
       run: |
         mkdir package
