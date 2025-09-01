@@ -129,9 +129,10 @@ pub struct Shnek<'a> {
     // historical positions of the head, used to know where the segments should be
     head_positions: VecDeque<HeadSnapshot>,
     speed: f32,
-    time_moving: f32,
+    pub time_moving: f32,
     time_boosted: f32,
     pub start_length: usize,
+    pub alive: bool,
 }
 
 impl<'a> Shnek<'a> {
@@ -152,6 +153,7 @@ impl<'a> Shnek<'a> {
             time_moving: 0.0,
             time_boosted: 0.0,
             start_length,
+            alive: true,
         };
         for _ in 0..start_length {
             s.add_segment();
@@ -188,6 +190,10 @@ impl<'a> Shnek<'a> {
     }
 
     pub fn pop_segment(&mut self) {
+        if self.segments.len() <= self.start_length {
+            self.alive = false;
+            return;
+        }
         self.segments.pop();
     }
 
@@ -227,6 +233,7 @@ impl<'a> Shnek<'a> {
 
     pub fn reset(&mut self) {
         self.time_moving = 0.0;
+        self.alive = true;
         self.time_boosted = 0.0;
         self.segments.clear();
         self.head_positions.clear();
@@ -276,20 +283,23 @@ impl<'a> Shnek<'a> {
                 FoodVariant::Poop,
                 segment.up,
                 segment.forward.cross(segment.up),
+                self.time_moving,
             );
         } else if self.time_boosted > 3. {
+            self.alive = false;
             return true;
         }
         false
     }
 
-    pub fn check_tail_collision(&self) -> bool {
+    pub fn check_tail_collision(&mut self) -> bool {
         if self.time_moving < 2.0 {
             return false; // 2 s of spawn immunity
         }
         for segment in self.segments[1..].iter() {
             let dist = mod_distance(self.get_position(), segment.get_position());
             if dist < Shnek::SPACING * 0.8 {
+                self.alive = false;
                 return true; // Collision detected
             }
         }
