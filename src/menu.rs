@@ -10,17 +10,31 @@ use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::prelude::*;
 use macroquad::{hash, ui::root_ui};
 
+fn menu_window() -> (Vec2, Vec2) {
+    draw_rectangle(
+        // draw a semi-transparent rectangle over the screen
+        0.0,
+        0.0,
+        screen_width(),
+        screen_height(),
+        color_u8!(0, 0, 0, 128),
+    );
+
+    let window_size = vec2(400.0, 500.0);
+    let window_pos = vec2(
+        screen_width() / 2.0 - window_size.x / 2.0,
+        screen_height() / 2.0 - window_size.y / 2.0,
+    );
+    (window_pos, window_size)
+}
+
 pub fn main_menu(game_state: &mut GameState, click_sound: &Sound, score_file: &mut Score) {
     if *game_state == GameState::MainMenu {
-        let window_size = vec2(400.0, 500.0);
-        let window_pos = vec2(
-            screen_width() / 2.0 - window_size.x / 2.0,
-            screen_height() / 2.0 - window_size.y / 2.0,
-        );
+        let (window_pos, window_size) = menu_window();
         let main_menu_id = hash!();
         root_ui().window(main_menu_id, window_pos, window_size, |ui| {
-            ui.label(vec2(80.0, -0.0), "Main Menu");
-            if ui.button(vec2(65.0, 50.0), "Play") {
+            ui.label(vec2(90.0, 0.0), "Main Menu");
+            if ui.button(vec2(70.0, 50.0), "Play") {
                 play_sound(
                     click_sound,
                     PlaySoundParams {
@@ -41,7 +55,7 @@ pub fn main_menu(game_state: &mut GameState, click_sound: &Sound, score_file: &m
                 score_file.prev_game_state = *game_state;
                 *game_state = GameState::Score;
             }
-            if ui.button(vec2(65.0, 250.0), "Quit") {
+            if ui.button(vec2(70.0, 250.0), "Quit") {
                 std::process::exit(0);
             }
         });
@@ -65,29 +79,16 @@ pub fn paused<'a>(
             score_file.write(high_score as usize);
         }
 
-        draw_rectangle(
-            // draw a semi-transparent rectangle over the screen
-            0.0,
-            0.0,
-            screen_width(),
-            screen_height(),
-            color_u8!(0, 0, 0, 128),
-        );
-
-        let window_size = vec2(400.0, 500.0);
-        let window_pos = vec2(
-            screen_width() / 2.0 - window_size.x / 2.0,
-            screen_height() / 2.0 - window_size.y / 2.0,
-        );
+        let (window_pos, window_size) = menu_window();
         let menu_id = hash!();
         root_ui().window(menu_id, window_pos, window_size, |ui| {
             if *game_state == GameState::Paused {
-                ui.label(vec2(10.0, 0.0), "Paused")
+                ui.label(vec2(115.0, 0.0), "Paused")
             } else {
-                ui.label(vec2(10.0, 0.0), "Game over")
+                ui.label(vec2(95.0, 0.0), "Game over")
             }
 
-            if *game_state == GameState::Paused && ui.button(vec2(30.0, 50.0), "Resume") {
+            if *game_state == GameState::Paused && ui.button(vec2(27.0, 50.0), "Resume") {
                 play_sound(
                     click,
                     PlaySoundParams {
@@ -96,8 +97,7 @@ pub fn paused<'a>(
                     },
                 );
                 *game_state = GameState::Running;
-            }
-            if *game_state == GameState::GameOver && ui.button(vec2(45.0, 50.0), "Score") {
+            } else if *game_state == GameState::GameOver && ui.button(vec2(45.0, 50.0), "Score") {
                 play_sound(
                     click,
                     PlaySoundParams {
@@ -127,7 +127,8 @@ pub fn paused<'a>(
                 }
                 *game_state = GameState::Running;
             }
-            if ui.button(vec2(65.0, 250.0), "Quit") {
+            if ui.button(vec2(70.0, 250.0), "Quit") {
+                score_file.write(high_score as usize);
                 std::process::exit(0);
             }
         });
@@ -152,7 +153,7 @@ pub fn score_menu(
         root_ui().window(menu_id, window_pos, window_size, |ui| {
             if ui.button(vec2(-15., -30.), "Back") {
                 play_sound(
-                    &click,
+                    click,
                     PlaySoundParams {
                         looped: false,
                         volume: 0.1,
@@ -299,7 +300,7 @@ pub fn running<'a>(
 
         if player.check_tail_collision() {
             play_sound(
-                &collision_sound,
+                collision_sound,
                 PlaySoundParams {
                     looped: false,
                     volume: 0.01,
@@ -311,7 +312,7 @@ pub fn running<'a>(
         (*food_distance, eaten) = food_factory.check_food_collision(player);
         if eaten {
             play_sound(
-                &eat_sound,
+                    eat_sound,
                 PlaySoundParams {
                     looped: false,
                     volume: 0.1,

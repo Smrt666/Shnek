@@ -1,9 +1,7 @@
 use crate::draw_utils::SPACE_SIZE;
 use crate::menu::{draw_status, main_menu, paused, running, score_menu, FPSCounter};
 use crate::models3d::Model3D;
-use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::{
-    hash,
     prelude::*,
     ui::{root_ui, Skin},
 };
