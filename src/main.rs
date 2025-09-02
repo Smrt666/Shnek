@@ -23,7 +23,7 @@ mod score;
 mod snake;
 mod menu;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 enum GameState {
     MainMenu,
     Running,
@@ -71,7 +71,7 @@ async fn main() {
 
     let mut food_distance = SPACE_SIZE * 3.0;
     loop {
-        main_menu(&mut game_state, &click);
+        main_menu(&mut game_state, &click, &mut score_file);
 
         if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
             game_state = match game_state {
@@ -91,7 +91,7 @@ async fn main() {
         // Set the camera to follow the player
         view.set_camera(player.get_camera_position());
 
-        clear_background(DARKGRAY);
+        clear_background(Color::new(0.68, 0.85, 0.90, 1.0));
         // draw
 
         food_factory.draw();
