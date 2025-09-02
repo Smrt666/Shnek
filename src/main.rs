@@ -1,5 +1,5 @@
 use crate::draw_utils::SPACE_SIZE;
-use crate::menu::{draw_status, main_menu, paused, running, score_menu};
+use crate::menu::{draw_status, main_menu, paused, running, score_menu, FPSCounter};
 use crate::models3d::Model3D;
 use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::{
@@ -70,6 +70,7 @@ async fn main() {
     root_ui().push_skin(&ui_skin);
 
     let mut food_distance = SPACE_SIZE * 3.0;
+    let mut fps_counter = FPSCounter::new();
     loop {
         main_menu(&mut game_state, &click, &mut score_file);
 
@@ -84,6 +85,7 @@ async fn main() {
         }
 
         let dt = get_frame_time();
+        fps_counter.add_frame_dt(dt);
         let score = player.get_score();
 
         running(&mut game_state, &eat_sound, &collision_sound, &mut player, &mut view, &mut food_factory, dt, &mut food_distance);
@@ -100,7 +102,7 @@ async fn main() {
         // Back to screen space, render some text
         set_default_camera();
         high_score = high_score.max(score);
-        draw_status(score, high_score, food_distance, food_factory.food_count(), food_factory.max_food as usize);  // TODO: max_food should be usize
+        draw_status(score, high_score, food_distance, food_factory.food_count(), food_factory.max_food as usize, &fps_counter);  // TODO: max_food should be usize
 
         // Pause menu
 

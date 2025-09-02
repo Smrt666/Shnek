@@ -195,9 +195,33 @@ pub fn score_menu(game_state: &mut GameState, click:&Sound, high_score: i32, sco
     }
 }
 
+pub struct FPSCounter {
+    samples: [f32; FPSCounter::SAMPLE_SIZE],
+    i: usize,
+}
 
-pub fn draw_status(score: i32, high_score: i32, food_distance: f32, food_count: usize, max_food: usize) {
-    draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
+impl FPSCounter {
+    const SAMPLE_SIZE: usize = 20;
+    pub fn new() -> Self {
+        Self {
+            samples: [0.0; FPSCounter::SAMPLE_SIZE],
+            i: 0,
+        }
+    }
+
+    pub fn add_frame_dt(&mut self, dt: f32) {
+        self.samples[self.i] = dt;
+        self.i = (self.i + 1) % FPSCounter::SAMPLE_SIZE;
+    }
+
+    pub fn fps(&self) -> f32 {
+        (FPSCounter::SAMPLE_SIZE as f32) / self.samples.iter().sum::<f32>().max(0.001)
+    }
+}
+
+
+pub fn draw_status(score: i32, high_score: i32, food_distance: f32, food_count: usize, max_food: usize, fps_counter: &FPSCounter) {
+    draw_text(&format!("fps: {}", fps_counter.fps().round()), 10.0, 20.0, 30.0, BLACK);
 
     draw_text(&format!("score: {}", score), 10.0, 50.0, 30.0, BLACK);
     draw_text(
