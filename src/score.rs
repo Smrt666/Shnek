@@ -1,8 +1,8 @@
+use crate::GameState;
+use crate::GameState::MainMenu;
 use std::fs::OpenOptions;
 use std::fs::{self};
 use std::io::Write;
-use crate::GameState;
-use crate::GameState::MainMenu;
 // brings `write!` and `writeln!`
 
 pub struct Score {

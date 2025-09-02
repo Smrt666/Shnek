@@ -17,11 +17,11 @@ use crate::food::FoodFactory;
 mod button;
 mod draw_utils;
 mod food;
+mod menu;
 mod models3d;
 mod movement;
 mod score;
 mod snake;
-mod menu;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum GameState {
@@ -88,7 +88,16 @@ async fn main() {
         fps_counter.add_frame_dt(dt);
         let score = player.get_score();
 
-        running(&mut game_state, &eat_sound, &collision_sound, &mut player, &mut view, &mut food_factory, dt, &mut food_distance);
+        running(
+            &mut game_state,
+            &eat_sound,
+            &collision_sound,
+            &mut player,
+            &mut view,
+            &mut food_factory,
+            dt,
+            &mut food_distance,
+        );
 
         // Set the camera to follow the player
         view.set_camera(player.get_camera_position());
@@ -102,11 +111,28 @@ async fn main() {
         // Back to screen space, render some text
         set_default_camera();
         high_score = high_score.max(score);
-        draw_status(score, high_score, food_distance, food_factory.food_count(), food_factory.max_food as usize, &fps_counter);  // TODO: max_food should be usize
+        draw_status(
+            score,
+            high_score,
+            food_distance,
+            food_factory.food_count(),
+            food_factory.max_food as usize,
+            &fps_counter,
+        ); // TODO: max_food should be usize
 
         // Pause menu
 
-        paused(&mut game_state, &click, high_score, &mut player, &mut view, &mut food_factory, &food_model, &poop_model, &mut score_file);
+        paused(
+            &mut game_state,
+            &click,
+            high_score,
+            &mut player,
+            &mut view,
+            &mut food_factory,
+            &food_model,
+            &poop_model,
+            &mut score_file,
+        );
 
         //Score screen
 

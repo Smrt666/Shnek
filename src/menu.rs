@@ -1,17 +1,14 @@
-use crate::GameState;
 use crate::food::FoodFactory;
 use crate::movement::View;
 use crate::score::Score;
 use crate::snake::Shnek;
+use crate::GameState;
 
-use macroquad::prelude::*;
 use crate::models3d::Model3D;
-use macroquad::audio::{play_sound, PlaySoundParams};
-use macroquad::{
-    hash,
-    ui::root_ui,
-};
 use macroquad::audio::Sound;
+use macroquad::audio::{play_sound, PlaySoundParams};
+use macroquad::prelude::*;
+use macroquad::{hash, ui::root_ui};
 
 pub fn main_menu(game_state: &mut GameState, click_sound: &Sound, score_file: &mut Score) {
     if *game_state == GameState::MainMenu {
@@ -52,8 +49,17 @@ pub fn main_menu(game_state: &mut GameState, click_sound: &Sound, score_file: &m
     }
 }
 
-pub fn paused<'a>(game_state: &mut GameState, click:&Sound, mut high_score: i32, player: &mut Shnek, view: &mut View,  food_factory: &mut FoodFactory<'a>,
-                food_model:&'a Model3D, poop_model: &'a Model3D,  score_file: &mut Score ) {
+pub fn paused<'a>(
+    game_state: &mut GameState,
+    click: &Sound,
+    mut high_score: i32,
+    player: &mut Shnek,
+    view: &mut View,
+    food_factory: &mut FoodFactory<'a>,
+    food_model: &'a Model3D,
+    poop_model: &'a Model3D,
+    score_file: &mut Score,
+) {
     if *game_state == GameState::Paused || *game_state == GameState::GameOver {
         if *game_state == GameState::GameOver {
             score_file.write(high_score as usize);
@@ -75,8 +81,11 @@ pub fn paused<'a>(game_state: &mut GameState, click:&Sound, mut high_score: i32,
         );
         let menu_id = hash!();
         root_ui().window(menu_id, window_pos, window_size, |ui| {
-            if *game_state == GameState::Paused {ui.label(vec2(10.0, 0.0), "Paused")}
-                else {ui.label(vec2(10.0, 0.0), "Game over")}
+            if *game_state == GameState::Paused {
+                ui.label(vec2(10.0, 0.0), "Paused")
+            } else {
+                ui.label(vec2(10.0, 0.0), "Game over")
+            }
 
             if *game_state == GameState::Paused && ui.button(vec2(30.0, 50.0), "Resume") {
                 play_sound(
@@ -126,7 +135,12 @@ pub fn paused<'a>(game_state: &mut GameState, click:&Sound, mut high_score: i32,
     }
 }
 
-pub fn score_menu(game_state: &mut GameState, click:&Sound, high_score: i32, score_file: &mut Score ) {
+pub fn score_menu(
+    game_state: &mut GameState,
+    click: &Sound,
+    high_score: i32,
+    score_file: &mut Score,
+) {
     if *game_state == GameState::Score {
         let window_size = vec2(250., 100.);
         let window_pos = vec2(
@@ -219,9 +233,21 @@ impl FPSCounter {
     }
 }
 
-
-pub fn draw_status(score: i32, high_score: i32, food_distance: f32, food_count: usize, max_food: usize, fps_counter: &FPSCounter) {
-    draw_text(&format!("fps: {}", fps_counter.fps().round()), 10.0, 20.0, 30.0, BLACK);
+pub fn draw_status(
+    score: i32,
+    high_score: i32,
+    food_distance: f32,
+    food_count: usize,
+    max_food: usize,
+    fps_counter: &FPSCounter,
+) {
+    draw_text(
+        &format!("fps: {}", fps_counter.fps().round()),
+        10.0,
+        20.0,
+        30.0,
+        BLACK,
+    );
 
     draw_text(&format!("score: {}", score), 10.0, 50.0, 30.0, BLACK);
     draw_text(
@@ -245,18 +271,19 @@ pub fn draw_status(score: i32, high_score: i32, food_distance: f32, food_count: 
         30.0,
         BLACK,
     );
-    draw_text(
-        &format!("max food: {}", max_food),
-        10.0,
-        150.0,
-        30.0,
-        BLACK,
-    );
+    draw_text(&format!("max food: {}", max_food), 10.0, 150.0, 30.0, BLACK);
 }
 
-
-pub fn running<'a>(game_state: &mut GameState, eat_sound :&Sound, collision_sound :&Sound, player: &mut Shnek,
-                view: &mut View,  food_factory: &mut FoodFactory<'a>, dt: f32, food_distance: &mut f32) {
+pub fn running<'a>(
+    game_state: &mut GameState,
+    eat_sound: &Sound,
+    collision_sound: &Sound,
+    player: &mut Shnek,
+    view: &mut View,
+    food_factory: &mut FoodFactory<'a>,
+    dt: f32,
+    food_distance: &mut f32,
+) {
     if *game_state == GameState::Running {
         // Only update if not paused
         view.rotate(dt);
