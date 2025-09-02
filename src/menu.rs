@@ -312,7 +312,7 @@ pub fn running<'a>(
         (*food_distance, eaten) = food_factory.check_food_collision(player);
         if eaten {
             play_sound(
-                    eat_sound,
+                eat_sound,
                 PlaySoundParams {
                     looped: false,
                     volume: 0.1,
