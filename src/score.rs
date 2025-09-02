@@ -1,10 +1,14 @@
+use crate::GameState;
+use crate::GameState::MainMenu;
 use std::fs::OpenOptions;
 use std::fs::{self};
-use std::io::Write; // brings `write!` and `writeln!`
+use std::io::Write;
+// brings `write!` and `writeln!`
 
 pub struct Score {
     file: String,
     do_write: bool,
+    pub prev_game_state: GameState,
 }
 
 impl Score {
@@ -12,11 +16,12 @@ impl Score {
         Self {
             file: String::from("assets/scores.txt"),
             do_write: true,
+            prev_game_state: MainMenu,
         }
     }
 
     pub fn write(&mut self, score: usize) {
-        if self.do_write {
+        if self.do_write && score > 0 {
             let mut write_file = OpenOptions::new()
                 //append ro write
                 .create(true)
