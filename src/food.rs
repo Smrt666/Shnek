@@ -1,11 +1,9 @@
 use crate::draw_utils::SPACE_SIZE;
+use crate::models3d::{Model3D, MultiModel};
 use crate::snake::*;
 use macroquad::prelude::*;
 use macroquad::rand::*;
 
-use crate::models3d::{Model3D, MultiModel};
-
-const DEBUG: bool = false;
 pub fn random_vec3(min: f32, max: f32) -> Vec3 {
     vec3(
         gen_range(min, max),
@@ -17,43 +15,64 @@ pub fn random_vec3(min: f32, max: f32) -> Vec3 {
 #[derive(PartialEq, Copy, Clone)]
 pub enum FoodVariant {
     Normal,
+    Bad,
     Poop,
 }
 
 #[derive(Copy, Clone)]
 pub struct Food {
+    pub time_created: f32,
     pub position: Vec3,
     pub up: Vec3,
     pub front: Vec3,
     pub size: f32,
-    pub quality: i32,
-    pub variant: FoodVariant,
+    pub quality: u32,
     id: usize,
 }
 
 pub struct FoodFactory<'a> {
-    quality_range: (i32, i32),
-    all_the_apples: Vec<Food>,
-    pub max_food: u32,
-    model: MultiModel<'a>,
+    quality_range: (u32, u32),
+    good_food: Vec<Food>,
+    good_food_model: MultiModel<'a>,
+    bad_food: Vec<Food>,
+    bad_food_model: MultiModel<'a>,
+    poop: Vec<Food>,
     poop_model: MultiModel<'a>,
+    pub max_food: u32,
     id_counter: usize,
 }
 
 impl<'a> FoodFactory<'a> {
-    pub fn new(base_model: &'a Model3D, base_poop_model: &'a Model3D) -> Self {
-        let model = MultiModel::new(base_model, 3);
+    const FOOD_COLLISION_DISTANCE: f32 = 10.0;
+    const BAD_FOOD_LIFETIME: f32 = 30.0; // seconds (or halved if boost moving)
+
+    pub fn new(
+        base_good_food_model: &'a Model3D,
+        base_bad_food_model: &'a Model3D,
+        base_poop_model: &'a Model3D,
+    ) -> Self {
         let mut s = Self {
             quality_range: (1, 2),
-            all_the_apples: Vec::new(),
+            good_food: Vec::new(),
+            bad_food: Vec::new(),
+            poop: Vec::new(),
             max_food: 1,
-            model,
+            good_food_model: MultiModel::new(base_good_food_model, 3),
+            bad_food_model: MultiModel::new(base_bad_food_model, 3),
             poop_model: MultiModel::new(base_poop_model, 3),
             id_counter: 0,
         };
         let front = vec3(0., 1., 0.);
         let up = vec3(0., 0., 1.);
-        s.new_custom(vec3(10., 10., 10.), 1., 1, FoodVariant::Normal, front, up);
+        s.new_custom(
+            vec3(10., 10., 10.),
+            1.,
+            1,
+            FoodVariant::Normal,
+            front,
+            up,
+            0.0,
+        );
         s
     }
 
@@ -61,103 +80,209 @@ impl<'a> FoodFactory<'a> {
         &mut self,
         position: Vec3,
         size: f32,
-        quality: i32,
+        quality: u32,
         variant: FoodVariant,
         front: Vec3,
         up: Vec3,
+        snake_time: f32,
     ) {
-        let food = Food::new_custom(position, up, front, size, quality, variant, self.id_counter);
+        let food = Food::new_custom(
+            position,
+            up,
+            front,
+            size,
+            quality,
+            self.id_counter,
+            snake_time,
+        );
         let food_translation = Mat4::from_translation(food.position);
         let right = food.front.cross(food.up).normalize();
         let food_rotation = Mat3::from_cols(right, food.front, food.up);
         let scale = food.size * (food.quality as f32).powf(1. / 3.);
         let food_matrix = food_translation.mul_mat4(&Mat4::from_mat3(scale * food_rotation));
+
+        // Update models
         match variant {
             FoodVariant::Normal => {
-                self.model.add_transformed(&food_matrix, self.id_counter);
+                self.good_food_model
+                    .add_transformed(&food_matrix, self.id_counter);
+                self.good_food.push(food);
             }
             FoodVariant::Poop => {
                 self.poop_model
                     .add_transformed(&food_matrix, self.id_counter);
+                self.poop.push(food);
+            }
+            FoodVariant::Bad => {
+                self.bad_food_model
+                    .add_transformed(&food_matrix, self.id_counter);
+                self.bad_food.push(food);
             }
         }
-
         self.id_counter += 1;
-        self.all_the_apples.push(food);
     }
 
-    pub fn new_random(&mut self, max_pos: f32) {
+    pub fn new_random(&mut self, max_pos: f32, food_variant: FoodVariant, snake_time: f32) {
         let position = random_vec3(0., max_pos);
         let quality = gen_range(self.quality_range.0, self.quality_range.1);
         let front = vec3(0., 1., 0.);
         let up = vec3(0., 0., 1.);
-        self.new_custom(position, 1., quality, FoodVariant::Normal, front, up);
+        self.new_custom(position, 1., quality, food_variant, front, up, snake_time);
     }
 
-    pub fn remove_food(&mut self, i: usize) {
-        self.model.remove_transformed(self.all_the_apples[i].id);
-        self.poop_model
-            .remove_transformed(self.all_the_apples[i].id);
-        self.poop_model.refresh_transformed();
-        self.model.refresh_transformed();
-        self.all_the_apples.remove(i);
+    pub fn new_random_with_quality(
+        &mut self,
+        max_pos: f32,
+        food_variant: FoodVariant,
+        quality: u32,
+        snake_time: f32,
+    ) {
+        let position = random_vec3(0., max_pos);
+        let front = vec3(0., 1., 0.);
+        let up = vec3(0., 0., 1.);
+        self.new_custom(position, 1., quality, food_variant, front, up, snake_time);
+    }
+
+    pub fn remove_food_model(&mut self, i: usize, variant: FoodVariant) {
+        match variant {
+            FoodVariant::Normal => {
+                self.good_food_model
+                    .remove_transformed(self.good_food[i].id);
+                self.good_food_model.refresh_transformed();
+                self.good_food.remove(i);
+            }
+            FoodVariant::Bad => {
+                self.bad_food_model.remove_transformed(self.bad_food[i].id);
+                self.bad_food_model.refresh_transformed();
+                self.bad_food.remove(i);
+            }
+            FoodVariant::Poop => {
+                self.poop_model.remove_transformed(self.poop[i].id);
+                self.poop_model.refresh_transformed();
+                self.poop.remove(i);
+            }
+        }
     }
 
     pub fn food_count(&self) -> usize {
-        self.all_the_apples.len()
+        self.good_food.len()
     }
 
-    pub fn check_food_collision(&mut self, snake: &mut Shnek) -> (f32, bool) {
+    fn generate_food(&mut self, snake: &Shnek, remove_count: usize) {
+        let score = snake.get_score();
+        // make new good food
+        let max_new = gen_range(
+            1,
+            self.max_food as usize + 1 - self.food_count() + remove_count,
+        );
+        for _ in 0..max_new {
+            if self.food_count() < self.max_food as usize + remove_count {
+                self.new_random(SPACE_SIZE, FoodVariant::Normal, snake.time_moving);
+            }
+        }
+        // make new bad food 40 % of the time (when score > 5)
+        if score > 5 && gen_range(0, 100) < 40 {
+            self.new_random_with_quality(
+                SPACE_SIZE,
+                FoodVariant::Bad,
+                (score / 5).min(1) as u32,
+                snake.time_moving,
+            );
+        }
+    }
+
+    fn check_good_food_collision(&mut self, snake: &mut Shnek) -> (f32, bool) {
         let mut min_dist = SPACE_SIZE * 3.0;
         let mut eaten = false;
         let mut remove: Vec<usize> = Vec::new();
-        for i in 0..self.all_the_apples.len() {
-            let food = &self.all_the_apples[i];
+        for i in 0..self.good_food.len() {
+            let food = &self.good_food[i];
             let dist = mod_distance(snake.get_position(), food.get_position());
             if dist < min_dist {
                 min_dist = dist;
             }
             // We are eating
-            if dist < 10. {
+            if dist < Self::FOOD_COLLISION_DISTANCE {
                 eaten = true;
-                if food.quality > 0 {
-                    for _ in 0..food.quality {
-                        snake.add_segment();
-                    }
-                } else {
-                    for _ in 0..(-food.quality as u32) {
-                        snake.pop_segment();
-                        // draw a semi-transparent rectangle over the screen
-                        draw_rectangle(
-                            0.0,
-                            0.0,
-                            screen_width(),
-                            screen_height(),
-                            Color::from_rgba(255, 0, 0, 100),
-                        );
-                    }
+                for _ in 0..food.quality {
+                    snake.add_segment();
                 }
                 remove.push(i);
-                let score = snake.get_score();
-                // make new food and update food related stuff
-                let normal = self
-                    .all_the_apples
-                    .iter()
-                    .filter(|apple| apple.variant == FoodVariant::Normal)
-                    .count();
-                for _ in 0..gen_range(1, self.max_food as usize + 1 - normal) {
-                    if self.food_count() - remove.len() < self.max_food as usize {
-                        self.new_random(SPACE_SIZE);
-                    }
-                }
-                self.quality_range.1 = (((score + 1) as f64).log10()).round() as i32 + 1;
-                self.max_food = ((score as f64 * 2.).log10()).round() as u32 + 1;
+                self.generate_food(snake, 1);
             }
         }
-        for i in remove {
-            self.remove_food(i);
+        for i in remove.iter().rev() {
+            self.remove_food_model(*i, FoodVariant::Normal);
         }
         (min_dist, eaten)
+    }
+
+    fn check_bad_food_collision(&mut self, snake: &mut Shnek) -> (f32, bool) {
+        let mut min_dist = SPACE_SIZE * 3.0;
+        let mut eaten = false;
+        let mut remove: Vec<usize> = Vec::new();
+        for i in 0..self.bad_food.len() {
+            let food = &self.bad_food[i];
+            // Bad food expires after some time
+            if snake.time_moving - food.time_created > Self::BAD_FOOD_LIFETIME {
+                remove.push(i);
+                continue;
+            }
+            let dist = mod_distance(snake.get_position(), food.get_position());
+            if dist < min_dist {
+                min_dist = dist;
+            }
+            // We are eating, do not generate new food
+            if dist < Self::FOOD_COLLISION_DISTANCE {
+                eaten = true;
+                for _ in 0..food.quality {
+                    snake.pop_segment();
+                }
+                remove.push(i);
+            }
+        }
+        for i in remove.iter().rev() {
+            self.remove_food_model(*i, FoodVariant::Bad);
+        }
+        (min_dist, eaten)
+    }
+
+    fn check_poop_collision(&mut self, snake: &mut Shnek) -> (f32, bool) {
+        let mut min_dist = SPACE_SIZE * 3.0;
+        let mut eaten = false;
+        let mut remove: Vec<usize> = Vec::new();
+        for i in 0..self.poop.len() {
+            let food = &self.poop[i];
+            let dist = mod_distance(snake.get_position(), food.get_position());
+            if dist < min_dist {
+                min_dist = dist;
+            }
+            // We are eating, do not generate new food
+            if dist < Self::FOOD_COLLISION_DISTANCE {
+                eaten = true;
+                for _ in 0..food.quality {
+                    snake.add_segment();
+                }
+                remove.push(i);
+            }
+        }
+        for i in remove.iter().rev() {
+            self.remove_food_model(*i, FoodVariant::Poop);
+        }
+        (min_dist, eaten)
+    }
+
+    pub fn check_food_collision(&mut self, snake: &mut Shnek) -> (f32, bool) {
+        let score = snake.get_score();
+
+        let (md1, eaten1) = self.check_good_food_collision(snake);
+        let (md2, eaten2) = self.check_bad_food_collision(snake);
+        let (md3, eaten3) = self.check_poop_collision(snake);
+
+        self.quality_range.1 = (((score + 1) as f64).log10()).round() as u32 + 1;
+        self.max_food = ((score as f64 * 2.).log10()).round() as u32 + 1;
+
+        (md1.min(md2.min(md3)), eaten1 || eaten2 || eaten3)
     }
 }
 
@@ -167,9 +292,9 @@ impl Food {
         up: Vec3,
         front: Vec3,
         size: f32,
-        quality: i32,
-        variant: FoodVariant,
+        quality: u32,
         id: usize,
+        time_created: f32,
     ) -> Self {
         Self {
             position,
@@ -178,7 +303,7 @@ impl Food {
             size,
             quality,
             id,
-            variant,
+            time_created,
         }
     }
 
@@ -189,30 +314,8 @@ impl Food {
 
 impl FoodFactory<'_> {
     pub fn draw(&self) {
-        self.model.draw();
+        self.good_food_model.draw();
+        self.bad_food_model.draw();
         self.poop_model.draw();
-
-        if DEBUG {
-            let repeat = 2;
-            for food in self.all_the_apples.iter() {
-                for i in -repeat..=repeat {
-                    for j in -repeat..=repeat {
-                        for k in -repeat..=repeat {
-                            let position = vec3(
-                                i as f32 * SPACE_SIZE,
-                                j as f32 * SPACE_SIZE,
-                                k as f32 * SPACE_SIZE,
-                            );
-                            draw_cube(
-                                food.get_position() + position,
-                                vec3(15.0, 15.0, 15.0),
-                                None,
-                                Color::from_rgba(255, 0, 0, 100),
-                            );
-                        }
-                    }
-                }
-            }
-        }
     }
 }

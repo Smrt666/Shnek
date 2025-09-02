@@ -70,7 +70,8 @@ pub fn paused<'a>(
     player: &mut Shnek,
     view: &mut View,
     food_factory: &mut FoodFactory<'a>,
-    food_model: &'a Model3D,
+    good_food_model: &'a Model3D,
+    bad_food_model: &'a Model3D,
     poop_model: &'a Model3D,
     score_file: &mut Score,
 ) {
@@ -120,7 +121,7 @@ pub fn paused<'a>(
                 high_score = 0;
                 player.reset();
                 view.reset();
-                *food_factory = FoodFactory::new(food_model, poop_model);
+                *food_factory = FoodFactory::new(good_food_model, bad_food_model, poop_model);
                 score_file.reset();
                 for _ in 0..player.start_length {
                     player.add_segment();
@@ -306,6 +307,9 @@ pub fn running<'a>(
                     volume: 0.01,
                 },
             );
+            *game_state = GameState::GameOver;
+        }
+        if !player.alive {
             *game_state = GameState::GameOver;
         }
         let eaten: bool;

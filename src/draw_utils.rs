@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 
-pub const SPACE_SIZE: f32 = 100.0;
+pub const SPACE_SIZE: f32 = 60.0;
 
 /** This is here for development / debug purposes only.
 */

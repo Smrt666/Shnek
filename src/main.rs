@@ -34,14 +34,15 @@ enum GameState {
 async fn main() {
     let head_model = Model3D::from_file("assets/head/snake_head.obj");
     let body_model = Model3D::from_file("assets/body/snake_body.obj");
-    let poop_model = Model3D::from_file("assets/poop/poop.obj");
 
     let mut player = snake::Shnek::new(&head_model, &body_model, 3);
     player.set_position(0., 0., 0.);
     player.set_direction(vec3(1., 0., 0.), vec3(0., 0., 1.));
 
     let food_model = Model3D::from_file("assets/apfel/apfel.obj");
-    let mut food_factory = FoodFactory::new(&food_model, &poop_model);
+    let bad_food_model = Model3D::from_file("assets/bad_apfel/bad_apfel.obj");
+    let poop_model = Model3D::from_file("assets/poop/poop.obj");
+    let mut food_factory = FoodFactory::new(&food_model, &bad_food_model, &poop_model);
 
     let mut view = movement::View::new();
 
@@ -128,6 +129,7 @@ async fn main() {
             &mut view,
             &mut food_factory,
             &food_model,
+            &bad_food_model,
             &poop_model,
             &mut score_file,
         );
