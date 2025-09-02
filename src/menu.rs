@@ -183,8 +183,44 @@ pub fn score_menu(game_state: &mut GameState, click:&Sound, high_score: i32, sco
         }
 }
 
+
+pub fn draw_status(score: i32, high_score: i32, food_distance: f32, food_count: usize, max_food: usize) {
+    draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
+
+    draw_text(&format!("score: {}", score), 10.0, 50.0, 30.0, BLACK);
+    draw_text(
+        &format!("high score: {}", high_score),
+        10.0,
+        70.0,
+        30.0,
+        BLACK,
+    );
+    draw_text(
+        &format!("food distance: {}", food_distance.round()),
+        10.0,
+        100.0,
+        30.0,
+        BLACK,
+    );
+    draw_text(
+        &format!("food count: {}", food_count),
+        10.0,
+        130.0,
+        30.0,
+        BLACK,
+    );
+    draw_text(
+        &format!("max food: {}", max_food),
+        10.0,
+        150.0,
+        30.0,
+        BLACK,
+    );
+}
+
+
 pub fn running<'a>(game_state: &mut GameState, eat_sound :&Sound, collision_sound :&Sound, player: &mut Shnek,
-                view: &mut View,  food_factory: &mut FoodFactory<'a>, dt: f32) {
+                view: &mut View,  food_factory: &mut FoodFactory<'a>, dt: f32, food_distance: &mut f32) {
     if *game_state == GameState::Running {
             // Only update if not paused
             view.rotate(dt);
@@ -208,9 +244,8 @@ pub fn running<'a>(game_state: &mut GameState, eat_sound :&Sound, collision_soun
                 );
                 *game_state = GameState::GameOver;
             }
-            let mut food_distance = SPACE_SIZE * 3.0;
             let eaten: bool;
-            (food_distance, eaten) = food_factory.check_food_collision(player);
+            (*food_distance, eaten) = food_factory.check_food_collision(player);
             if eaten {
                 play_sound(
                     &eat_sound,

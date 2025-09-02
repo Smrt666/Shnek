@@ -1,5 +1,5 @@
 use crate::draw_utils::SPACE_SIZE;
-use crate::menu::{main_menu, paused, running, score_menu};
+use crate::menu::{draw_status, main_menu, paused, running, score_menu};
 use crate::models3d::Model3D;
 use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::{
@@ -69,13 +69,9 @@ async fn main() {
     };
     root_ui().push_skin(&ui_skin);
 
-    let food_distance = SPACE_SIZE * 3.0;
+    let mut food_distance = SPACE_SIZE * 3.0;
     loop {
         main_menu(&mut game_state, &click);
-
-        // if is_key_pressed(KeyCode::Backspace) {
-        //     game_state = GameState::GameOver
-        // }
 
         if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Space) {
             game_state = match game_state {
@@ -90,7 +86,7 @@ async fn main() {
         let dt = get_frame_time();
         let score = player.get_score();
 
-        running(&mut game_state, &eat_sound, &collision_sound, &mut player, &mut view, &mut food_factory, dt);
+        running(&mut game_state, &eat_sound, &collision_sound, &mut player, &mut view, &mut food_factory, dt, &mut food_distance);
 
         // Set the camera to follow the player
         view.set_camera(player.get_camera_position());
@@ -103,38 +99,8 @@ async fn main() {
 
         // Back to screen space, render some text
         set_default_camera();
-        draw_text(&format!("fps: {}", get_fps()), 10.0, 20.0, 30.0, BLACK);
-
-        draw_text(&format!("score: {}", score), 10.0, 50.0, 30.0, BLACK);
         high_score = high_score.max(score);
-        draw_text(
-            &format!("high score: {}", high_score),
-            10.0,
-            70.0,
-            30.0,
-            BLACK,
-        );
-        draw_text(
-            &format!("food distance: {}", food_distance.round()),
-            10.0,
-            100.0,
-            30.0,
-            BLACK,
-        );
-        draw_text(
-            &format!("food count: {}", food_factory.food_count()),
-            10.0,
-            130.0,
-            30.0,
-            BLACK,
-        );
-        draw_text(
-            &format!("max food: {}", food_factory.max_food),
-            10.0,
-            150.0,
-            30.0,
-            BLACK,
-        );
+        draw_status(score, high_score, food_distance, food_factory.food_count(), food_factory.max_food as usize);  // TODO: max_food should be usize
 
         // Pause menu
 
