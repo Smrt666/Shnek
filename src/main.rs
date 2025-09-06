@@ -1,16 +1,16 @@
-use crate::draw_utils::SPACE_SIZE;
-use crate::menu::{draw_status, main_menu, paused, running, score_menu, FPSCounter};
-use crate::models3d::Model3D;
-use macroquad::{
-    prelude::*,
-    ui::{root_ui, Skin},
-};
-
 use crate::button::{
     load_button_style, load_font, load_label_style, load_window_background, load_window_style,
     loading_sound,
 };
+use crate::draw_utils::SPACE_SIZE;
 use crate::food::FoodFactory;
+use crate::menu::{draw_status, help, main_menu, paused, running, score_menu, FPSCounter};
+use crate::models3d::Model3D;
+use macroquad::miniquad::window::set_window_size;
+use macroquad::{
+    prelude::*,
+    ui::{root_ui, Skin},
+};
 
 mod button;
 mod draw_utils;
@@ -32,6 +32,7 @@ enum GameState {
 
 #[macroquad::main("Shnek")]
 async fn main() {
+    set_window_size(1600, 1200);
     let head_model = Model3D::from_file("assets/head/snake_head.obj");
     let body_model = Model3D::from_file("assets/body/snake_body.obj");
 
@@ -124,7 +125,7 @@ async fn main() {
         paused(
             &mut game_state,
             &click,
-            high_score,
+            &mut high_score,
             &mut player,
             &mut view,
             &mut food_factory,
@@ -134,8 +135,10 @@ async fn main() {
             &mut score_file,
         );
 
-        //Score screen
+        // Help on the bottom
+        help();
 
+        //Score screen
         score_menu(&mut game_state, &click, high_score, &mut score_file);
 
         next_frame().await;

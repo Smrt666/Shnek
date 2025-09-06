@@ -66,7 +66,7 @@ pub fn main_menu(game_state: &mut GameState, click_sound: &Sound, score_file: &m
 pub fn paused<'a>(
     game_state: &mut GameState,
     click: &Sound,
-    mut high_score: i32,
+    high_score: &mut i32,
     player: &mut Shnek,
     view: &mut View,
     food_factory: &mut FoodFactory<'a>,
@@ -77,7 +77,7 @@ pub fn paused<'a>(
 ) {
     if *game_state == GameState::Paused || *game_state == GameState::GameOver {
         if *game_state == GameState::GameOver {
-            score_file.write(high_score as usize);
+            score_file.write(*high_score as usize);
         }
 
         let (window_pos, window_size) = menu_window();
@@ -118,7 +118,7 @@ pub fn paused<'a>(
                         volume: 0.1,
                     },
                 );
-                high_score = 0;
+                *high_score = 0;
                 player.reset();
                 view.reset();
                 *food_factory = FoodFactory::new(good_food_model, bad_food_model, poop_model);
@@ -129,7 +129,7 @@ pub fn paused<'a>(
                 *game_state = GameState::Running;
             }
             if ui.button(vec2(70.0, 250.0), "Quit") {
-                score_file.write(high_score as usize);
+                score_file.write(*high_score as usize);
                 std::process::exit(0);
             }
         });
@@ -324,4 +324,16 @@ pub fn running<'a>(
             )
         }
     }
+}
+
+pub fn help() {
+    let y = screen_height() - 10.;
+    let x = screen_width() / 2.0 - 390.;
+    draw_text(
+        "W A S D - change direction   Q E - spin   Left Shift - speed boost   Esc/Space - pause",
+        x,
+        y,
+        20.0,
+        BLACK,
+    );
 }
