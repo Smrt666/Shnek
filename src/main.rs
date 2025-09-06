@@ -124,7 +124,7 @@ async fn main() {
         paused(
             &mut game_state,
             &click,
-            high_score,
+            &mut high_score,
             &mut player,
             &mut view,
             &mut food_factory,
