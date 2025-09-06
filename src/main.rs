@@ -1,5 +1,5 @@
 use crate::draw_utils::SPACE_SIZE;
-use crate::menu::{draw_status, main_menu, paused, running, score_menu, FPSCounter};
+use crate::menu::{draw_status, help, main_menu, paused, running, score_menu, FPSCounter};
 use crate::models3d::Model3D;
 use macroquad::{
     prelude::*,
@@ -135,8 +135,10 @@ async fn main() {
             &mut score_file,
         );
 
-        //Score screen
+        // Help on the bottom
+        help();
 
+        //Score screen
         score_menu(&mut game_state, &click, high_score, &mut score_file);
 
         next_frame().await;
