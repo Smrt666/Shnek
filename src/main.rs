@@ -1,16 +1,16 @@
-use crate::draw_utils::SPACE_SIZE;
-use crate::menu::{draw_status, help, main_menu, paused, running, score_menu, FPSCounter};
-use crate::models3d::Model3D;
-use macroquad::{
-    prelude::*,
-    ui::{root_ui, Skin},
-};
-use macroquad::miniquad::window::set_window_size;
 use crate::button::{
     load_button_style, load_font, load_label_style, load_window_background, load_window_style,
     loading_sound,
 };
+use crate::draw_utils::SPACE_SIZE;
 use crate::food::FoodFactory;
+use crate::menu::{draw_status, help, main_menu, paused, running, score_menu, FPSCounter};
+use crate::models3d::Model3D;
+use macroquad::miniquad::window::set_window_size;
+use macroquad::{
+    prelude::*,
+    ui::{root_ui, Skin},
+};
 
 mod button;
 mod draw_utils;
