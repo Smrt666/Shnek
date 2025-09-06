@@ -5,7 +5,7 @@ use macroquad::{
     prelude::*,
     ui::{root_ui, Skin},
 };
-
+use macroquad::miniquad::window::set_window_size;
 use crate::button::{
     load_button_style, load_font, load_label_style, load_window_background, load_window_style,
     loading_sound,
@@ -32,6 +32,7 @@ enum GameState {
 
 #[macroquad::main("Shnek")]
 async fn main() {
+    set_window_size(1600, 1200);
     let head_model = Model3D::from_file("assets/head/snake_head.obj");
     let body_model = Model3D::from_file("assets/body/snake_body.obj");
 

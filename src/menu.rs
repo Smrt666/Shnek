@@ -58,6 +58,12 @@ pub fn main_menu(game_state: &mut GameState, click_sound: &Sound, score_file: &m
             if ui.button(vec2(70.0, 250.0), "Quit") {
                 std::process::exit(0);
             }
+            // Controls instructions
+            ui.label(vec2(10., 360.), "Q W E");
+            ui.label(vec2(110., 360.), "spin   up   spin");
+            ui.label(vec2(10., 390.), "A S D");
+            ui.label(vec2(110., 390.), "left down right");
+            ui.label(vec2(10., 420.), "SHIFT  boost");
         });
         root_ui().move_window(main_menu_id, window_pos);
     }
